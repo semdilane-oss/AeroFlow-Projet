@@ -1,0 +1,7 @@
+Vol,Compagnie,Heure_Arrivee,Passagers,Taux_Transit,Temps_Escale_Min
+KP020,ASKY,06:30,110,0.40,40
+AS302,ASKY,14:30,180,0.35,30
+AF860,Air France,15:00,260,0.15,90
+ET901,Ethiopian,15:15,210,0.45,35
+KP105,ASKY,18:40,130,0.50,60
+AT540,Royal Air Maroc,22:15,150,0.10,120
