@@ -1,9 +1,10 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - DESIGN EXECUTIVE & CORRECTION AUDIO
+# APPLICATION WEB STREAMLIT - DESIGN EXECUTIVE & OPTIMISATION HAUT VOLUME
 # ==============================================================================
 
 import io
+import math
 import os
 import time
 from gtts import gTTS
@@ -21,72 +22,23 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Style CSS Avancé (Design Aéro Pro - Bleu Aviation, Blanc Épuré & Cartes Relief)
 st.markdown(
     """
 <style>
-    /* Fond principal et typographie */
-    .stApp {
-        background-color: #F8FAFC;
-        color: #1E293B;
-    }
-
-    /* Titres et en-tête */
-    .header-title {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-weight: 800;
-        font-size: 2.2rem;
-        color: #0F172A;
-        margin-bottom: 0px;
-    }
-    .header-subtitle {
-        color: #0284C7;
-        font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 20px;
-    }
-
-    /* Cartes KPI Style Modern Dashboard */
+    .stApp { background-color: #F8FAFC; color: #1E293B; }
+    .header-title { font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: #0F172A; }
+    .header-subtitle { color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }
     .kpi-container {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        border-top: 4px solid #0284C7;
+        background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;
+        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
     }
-    .kpi-container-alert {
-        border-top: 4px solid #EF4444 !important;
-        background-color: #FEF2F2;
-    }
-    .kpi-label {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #64748B;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .kpi-val {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #0F172A;
-        margin-top: 4px;
-    }
-
-    /* Bouton principal customisé */
+    .kpi-container-alert { border-top: 4px solid #EF4444 !important; background-color: #FEF2F2; }
+    .kpi-label { font-size: 0.8rem; font-weight: 700; color: #64748B; text-transform: uppercase; }
+    .kpi-val { font-size: 1.8rem; font-weight: 800; color: #0F172A; margin-top: 4px; }
     div.stButton > button {
         background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border-radius: 8px !important;
-        border: none !important;
-        padding: 10px 20px !important;
-        box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3) !important;
-        width: 100%;
-    }
-    div.stButton > button:hover {
-        background: linear-gradient(135deg, #0369A1 0%, #075985 100%) !important;
-        transform: translateY(-1px);
+        color: white !important; font-weight: 700 !important; border-radius: 8px !important;
+        border: none !important; padding: 10px 20px !important; width: 100%;
     }
 </style>
 """,
@@ -95,56 +47,40 @@ st.markdown(
 
 
 # ------------------------------------------------------------------------------
-# FONCTION UNIVERSELLE DE CHARGEMENT ET NETTOYAGE DES DONNÉES
+# CHARGEMENT SANS LIMITE DE TAILLE (ILLIMITÉ)
 # ------------------------------------------------------------------------------
 def charger_et_nettoyer_donnees(source_fichier):
-    """Charge et nettoie le CSV en s'adaptant à n'importe quel séparateur,
-
-    encodage ou espace parasite dans les entêtes.
-    """
     if isinstance(source_fichier, str):
         with open(source_fichier, "rb") as f:
             contenu_octets = f.read()
     else:
         contenu_octets = source_fichier.read()
 
-    # Détection et suppression du BOM UTF-8 (\ufeff) s'il existe
     if contenu_octets.startswith(b"\xef\xbb\xbf"):
         contenu_octets = contenu_octets[3:]
 
     contenu_texte = contenu_octets.decode("utf-8", errors="ignore")
 
-    # Détection automatique du séparateur (virgule, point-virgule, tabulation)
     premiere_ligne = contenu_texte.splitlines()[0] if contenu_texte else ""
-    nb_virgules = premiere_ligne.count(",")
-    nb_points_virgules = premiere_ligne.count(";")
-    nb_tabs = premiere_ligne.count("\t")
-
     separateur = ","
-    if nb_points_virgules > nb_virgules and nb_points_virgules > nb_tabs:
+    if premiere_ligne.count(";") > premiere_ligne.count(","):
         separateur = ";"
-    elif nb_tabs > nb_virgules and nb_tabs > nb_points_virgules:
+    elif premiere_ligne.count("\t") > premiere_ligne.count(","):
         separateur = "\t"
 
-    # Lecture via Pandas
     df_temp = pd.read_csv(io.StringIO(contenu_texte), sep=separateur)
-
-    # Nettoyage des noms de colonnes (élimine les espaces invisibles)
     df_temp.columns = df_temp.columns.str.strip()
 
-    # Correction automatique des fautes d'encodage sur la compagnie
     if "Compagnie" in df_temp.columns:
         df_temp["Compagnie"] = df_temp["Compagnie"].astype(str)
         df_temp["Compagnie"] = df_temp["Compagnie"].str.replace(
             r"Air C[ÃâÂ]te d['’]Ivoire", "Air Cote d'Ivoire", regex=True
         )
 
-    # Convertir 'Passagers', 'Taux_Transit' et 'Temps_Escale_Min' en types numériques
     for col in ["Passagers", "Taux_Transit", "Temps_Escale_Min"]:
         if col in df_temp.columns:
             df_temp[col] = pd.to_numeric(df_temp[col], errors="coerce")
 
-    # Calcul dynamique des passagers en transit et terminus
     if "Passagers" in df_temp.columns and "Taux_Transit" in df_temp.columns:
         df_temp["Passagers_Transit"] = (
             (df_temp["Passagers"] * df_temp["Taux_Transit"])
@@ -155,10 +91,18 @@ def charger_et_nettoyer_donnees(source_fichier):
             df_temp["Passagers"] - df_temp["Passagers_Transit"]
         )
 
+    # Extraction de l'heure en tranche horaire pour le regroupement
+    if "Heure_Arrivee" in df_temp.columns:
+        df_temp["Tranche_Horaire"] = (
+            df_temp["Heure_Arrivee"].astype(str).str.split(":").str[0]
+            + "h00 - "
+            + df_temp["Heure_Arrivee"].astype(str).str.split(":").str[0]
+            + "h59"
+        )
+
     return df_temp
 
 
-# Fonction de génération d'annonce vocale sécurisée
 def generer_annonce_vocale(texte):
     for file in os.listdir("."):
         if file.startswith("annonce_") and file.endswith(".mp3"):
@@ -175,7 +119,7 @@ def generer_annonce_vocale(texte):
 
 
 # ------------------------------------------------------------------------------
-# 2. EN-TÊTE DU DASHBOARD
+# EN-TÊTE
 # ------------------------------------------------------------------------------
 st.markdown(
     '<div class="header-title">✈️ AeroFlow — Operations Control Center</div>',
@@ -188,7 +132,7 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# 3. BARRE LATÉRALE (SIDEBAR)
+# SIDEBAR ET CALCUL DYNAMIQUE DES GUICHETS
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -202,7 +146,7 @@ with st.sidebar:
             df = charger_et_nettoyer_donnees(fichier_importe)
             st.success("Fichier chargé avec succès")
         except Exception as e:
-            st.error(f"Erreur lors de la lecture du fichier : {e}")
+            st.error(f"Erreur de lecture : {e}")
             st.stop()
     else:
         try:
@@ -216,10 +160,29 @@ with st.sidebar:
     capacite_agent_heure = st.slider(
         "Capacité traitement (pax/agent/h)", 20, 60, 40
     )
-    guichets_ouverts = st.slider("Guichets ouverts", 1, 20, 4)
+
+    # CALCUL AUTOMATIQUE DU NOMBRE DE GUICHETS RECOMMANDÉS POUR LA POINTE
+    if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
+        max_pax_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().max()
+        guichets_recommandes = max(1, math.ceil(max_pax_heure / capacite_agent_heure))
+    else:
+        guichets_recommandes = 4
+
+    guichets_ouverts = st.slider(
+        "Guichets ouverts actuellement",
+        1,
+        max(50, guichets_recommandes + 10),
+        guichets_recommandes,
+    )
+
+    if guichets_ouverts < guichets_recommandes:
+        st.warning(
+            f"💡 **Recommandation :** Ouvrir au moins **{guichets_recommandes}"
+            " guichets** pour absorber les pics d'affluence."
+        )
 
 # ------------------------------------------------------------------------------
-# 4. CALCULS ET MÉTIER
+# CALCULS METIER ET KPIs
 # ------------------------------------------------------------------------------
 vols_critiques = (
     df[df["Temps_Escale_Min"] <= 45]
@@ -227,9 +190,6 @@ vols_critiques = (
     else pd.DataFrame()
 )
 
-# ------------------------------------------------------------------------------
-# 5. CARTES D'INDICATEURS (KPIs)
-# ------------------------------------------------------------------------------
 c1, c2, c3, c4 = st.columns(4)
 
 total_passagers = (
@@ -241,134 +201,119 @@ total_transit = (
 
 with c1:
     st.markdown(
-        f"""
-    <div class="kpi-container">
-        <div class="kpi-label">Passagers Attendus</div>
-        <div class="kpi-val">{total_passagers:,} pax</div>
-    </div>
-    """,
+        f'<div class="kpi-container"><div class="kpi-label">Passagers'
+        f' Attendus</div><div class="kpi-val">{total_passagers:,}'
+        " pax</div></div>",
         unsafe_allow_html=True,
     )
-
 with c2:
     st.markdown(
-        f"""
-    <div class="kpi-container">
-        <div class="kpi-label">Flux Transit</div>
-        <div class="kpi-val">{total_transit:,} pax</div>
-    </div>
-    """,
+        f'<div class="kpi-container"><div class="kpi-label">Flux'
+        f' Transit</div><div class="kpi-val">{total_transit:,} pax</div></div>',
         unsafe_allow_html=True,
     )
-
 with c3:
     st.markdown(
-        f"""
-    <div class="kpi-container">
-        <div class="kpi-label">Capacité Traitement</div>
-        <div class="kpi-val">{guichets_ouverts * capacite_agent_heure} pax/h</div>
-    </div>
-    """,
+        '<div class="kpi-container"><div class="kpi-label">Capacité'
+        f' Traitement</div><div class="kpi-val">{guichets_ouverts *'
+        f" capacite_agent_heure:,} pax/h</div></div>",
         unsafe_allow_html=True,
     )
-
 with c4:
     alert_style = "kpi-container-alert" if len(vols_critiques) > 0 else ""
     color_val = "#EF4444" if len(vols_critiques) > 0 else "#10B981"
     st.markdown(
-        f"""
-    <div class="kpi-container {alert_style}">
-        <div class="kpi-label">Vols Critiques (≤45 min)</div>
-        <div class="kpi-val" style="color: {color_val};">{len(vols_critiques)} Vol(s)</div>
-    </div>
-    """,
+        f'<div class="kpi-container {alert_style}"><div'
+        ' class="kpi-label">Vols Critiques (≤45 min)</div><div class="kpi-val"'
+        f' style="color: {color_val};">{len(vols_critiques):,} Vol(s)</div></div>',
         unsafe_allow_html=True,
     )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 6. GRAPHIQUES PRO (PALETTE BLEU / AMBRE)
+# 6. GRAPHIQUES LISIBLES ET AGRÉGÉS (OPTIMISÉS POUR 10 000+ LIGNES)
 # ------------------------------------------------------------------------------
 col_left, col_right = st.columns(2)
 
 with col_left:
-    st.subheader("📊 Affluence par Heure d'Arrivée")
-    if "Heure_Arrivee" in df.columns and "Passagers" in df.columns:
+    st.subheader("📊 Affluence Globale par Tranche Horaire")
+    if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
+        # Regroupement par tranche horaire pour rendre le graphique ultra-lisible
+        df_affluence_heure = (
+            df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
+        )
         fig_affluence = px.bar(
-            df,
-            x="Heure_Arrivee",
+            df_affluence_heure,
+            x="Tranche_Horaire",
             y="Passagers",
-            color="Vol" if "Vol" in df.columns else None,
             text_auto=True,
-            color_discrete_sequence=px.colors.sequential.Blues_r,
+            color="Passagers",
+            color_continuous_scale="Blues",
             template="plotly_white",
         )
         fig_affluence.update_layout(
-            xaxis_title="Heure d'arrivée",
-            yaxis_title="Nombre de passagers",
+            xaxis_title="Tranche Horaire",
+            yaxis_title="Total Passagers",
             margin=dict(l=10, r=10, t=30, b=10),
         )
         st.plotly_chart(fig_affluence, use_container_width=True)
 
 with col_right:
-    st.subheader("⏱️ Escale & Correspondances")
-    if "Vol" in df.columns and "Temps_Escale_Min" in df.columns:
+    st.subheader("⏱️ Répartition des Temps d'Escale (Distribution)")
+    if "Temps_Escale_Min" in df.columns:
+        # Categorisation en plages de temps pour une vision synthétique
+        bins = [0, 30, 45, 60, 90, 120, 999]
+        labels = [
+            "< 30 min",
+            "30-45 min (Critique)",
+            "45-60 min",
+            "60-90 min",
+            "90-120 min",
+            "> 120 min",
+        ]
+        df["Plage_Escale"] = pd.cut(
+            df["Temps_Escale_Min"], bins=bins, labels=labels
+        )
+        df_escale_group = df["Plage_Escale"].value_counts().reset_index()
+        df_escale_group.columns = ["Plage_Escale", "Nombre_de_Vols"]
+
         fig_transit = px.bar(
-            df,
-            x="Vol",
-            y="Temps_Escale_Min",
-            color="Temps_Escale_Min",
+            df_escale_group,
+            x="Plage_Escale",
+            y="Nombre_de_Vols",
+            color="Nombre_de_Vols",
             color_continuous_scale="Reds_r",
             text_auto=True,
             template="plotly_white",
         )
-        fig_transit.add_hline(
-            y=45,
-            line_dash="dash",
-            line_color="#EF4444",
-            annotation_text="Seuil 45 min",
-        )
         fig_transit.update_layout(
-            xaxis_title="Vol",
-            yaxis_title="Temps escale (min)",
+            xaxis_title="Plage de Temps d'Escale",
+            yaxis_title="Nombre de Vols",
             margin=dict(l=10, r=10, t=30, b=10),
         )
         st.plotly_chart(fig_transit, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 7. GESTION DES ALERTES ET SYNTHÈSE VOCALE SÉCURISÉE (OPTIMISÉE GRAND VOLUME)
+# 7. ALERTES ET ANNONCE VOCALE GLOBALE
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("⚠️ Centre d'Alertes et Annonces")
 
 if len(vols_critiques) > 0:
-    # --- BOUTON VOCAL PLACÉ TOUT EN HAUT DES ALERTES ---
     col_btn, col_info = st.columns([1, 2])
     with col_btn:
         if st.button("🔊 Diffuser l'Annonce Vocale Globale"):
             nb_crit = len(vols_critiques)
-            if nb_crit <= 5:
-                phrases_vols = []
-                for _, vol in vols_critiques.iterrows():
-                    phrases_vols.append(
-                        f"vol {vol.get('Vol', '')}, {vol.get('Passagers_Transit', 0)} passagers en transit, escale de {vol.get('Temps_Escale_Min', 0)} minutes."
-                    )
-                message = (
-                    f"Attention PC Sécurité. Alerte correspondance urgente sur"
-                    f" {nb_crit} vols. " + " ".join(phrases_vols)
-                )
-            else:
-                total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
-                message = (
-                    f"Attention PC Sécurité. Alerte générale. Un total de"
-                    f" {nb_crit} vols critiques a été détecté, représentant"
-                    f" {total_pax_crit} passagers en correspondance rapide."
-                    " Veuillez consulter le tableau de bord."
-                )
+            total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
+            message = (
+                f"Attention PC Sécurité. Alerte générale. Un total de"
+                f" {nb_crit} vols critiques a été détecté, représentant"
+                f" {total_pax_crit} passagers en correspondance rapide."
+                " Veuillez consulter le tableau de bord."
+            )
 
             fichier_audio = generer_annonce_vocale(message)
-
             with open(fichier_audio, "rb") as f:
                 audio_bytes = f.read()
             st.audio(audio_bytes, format="audio/mp3")
@@ -376,11 +321,10 @@ if len(vols_critiques) > 0:
 
     with col_info:
         st.warning(
-            f"⚠️ **{len(vols_critiques)} vol(s) critique(s) détecté(s)** (Escale"
-            " ≤ 45 min)."
+            f"⚠️ **{len(vols_critiques):,} vol(s) critique(s) détecté(s)**"
+            " (Escale ≤ 45 min)."
         )
 
-    # --- LISTE DES ALERTES DANS UNE BOÎTE AVEC DÉFILEMENT LIMITÉ (EVITE D'ALLONGER LA PAGE) ---
     with st.container(height=280):
         for _, vol in vols_critiques.iterrows():
             st.error(
@@ -394,7 +338,7 @@ else:
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
-# 8. TABLEAU DE DONNÉES
+# 8. TABLEAU
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
     st.dataframe(df, use_container_width=True)
