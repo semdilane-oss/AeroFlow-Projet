@@ -91,7 +91,6 @@ def charger_et_nettoyer_donnees(source_fichier):
             df_temp["Passagers"] - df_temp["Passagers_Transit"]
         )
 
-    # Extraction de l'heure en tranche horaire pour le regroupement
     if "Heure_Arrivee" in df_temp.columns:
         df_temp["Tranche_Horaire"] = (
             df_temp["Heure_Arrivee"].astype(str).str.split(":").str[0]
@@ -161,7 +160,6 @@ with st.sidebar:
         "Capacité traitement (pax/agent/h)", 20, 60, 40
     )
 
-    # CALCUL AUTOMATIQUE DU NOMBRE DE GUICHETS RECOMMANDÉS POUR LA POINTE
     if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
         max_pax_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().max()
         guichets_recommandes = max(1, math.ceil(max_pax_heure / capacite_agent_heure))
@@ -198,48 +196,41 @@ total_passagers = (
 total_transit = (
     int(df["Passagers_Transit"].sum()) if "Passagers_Transit" in df.columns else 0
 )
+capacite_totale = guichets_ouverts * capacite_agent_heure
 
 with c1:
     st.markdown(
-        f'<div class="kpi-container"><div class="kpi-label">Passagers'
-        f' Attendus</div><div class="kpi-val">{total_passagers:,}'
-        " pax</div></div>",
+        f'<div class="kpi-container"><div class="kpi-label">Passagers Attendus</div><div class="kpi-val">{total_passagers:,} pax</div></div>',
         unsafe_allow_html=True,
     )
 with c2:
     st.markdown(
-        f'<div class="kpi-container"><div class="kpi-label">Flux'
-        f' Transit</div><div class="kpi-val">{total_transit:,} pax</div></div>',
+        f'<div class="kpi-container"><div class="kpi-label">Flux Transit</div><div class="kpi-val">{total_transit:,} pax</div></div>',
         unsafe_allow_html=True,
     )
 with c3:
     st.markdown(
-        '<div class="kpi-container"><div class="kpi-label">Capacité'
-        f' Traitement</div><div class="kpi-val">{guichets_ouverts *'
-        f" capacite_agent_heure:,} pax/h</div></div>",
+        f'<div class="kpi-container"><div class="kpi-label">Capacité Traitement</div><div class="kpi-val">{capacite_totale:,} pax/h</div></div>',
         unsafe_allow_html=True,
     )
 with c4:
     alert_style = "kpi-container-alert" if len(vols_critiques) > 0 else ""
     color_val = "#EF4444" if len(vols_critiques) > 0 else "#10B981"
     st.markdown(
-        f'<div class="kpi-container {alert_style}"><div'
-        ' class="kpi-label">Vols Critiques (≤45 min)</div><div class="kpi-val"'
-        f' style="color: {color_val};">{len(vols_critiques):,} Vol(s)</div></div>',
+        f'<div class="kpi-container {alert_style}"><div class="kpi-label">Vols Critiques (≤45 min)</div><div class="kpi-val" style="color: {color_val};">{len(vols_critiques):,} Vol(s)</div></div>',
         unsafe_allow_html=True,
     )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 6. GRAPHIQUES LISIBLES ET AGRÉGÉS (OPTIMISÉS POUR 10 000+ LIGNES)
+# 6. GRAPHIQUES LISIBLES ET AGRÉGÉS
 # ------------------------------------------------------------------------------
 col_left, col_right = st.columns(2)
 
 with col_left:
     st.subheader("📊 Affluence Globale par Tranche Horaire")
     if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
-        # Regroupement par tranche horaire pour rendre le graphique ultra-lisible
         df_affluence_heure = (
             df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
         )
@@ -262,7 +253,6 @@ with col_left:
 with col_right:
     st.subheader("⏱️ Répartition des Temps d'Escale (Distribution)")
     if "Temps_Escale_Min" in df.columns:
-        # Categorisation en plages de temps pour une vision synthétique
         bins = [0, 30, 45, 60, 90, 120, 999]
         labels = [
             "< 30 min",
