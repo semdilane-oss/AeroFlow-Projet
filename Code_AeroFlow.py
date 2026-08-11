@@ -3,6 +3,7 @@
 # APPLICATION WEB STREAMLIT - DESIGN EXECUTIVE & OPTIMISATION HAUT VOLUME
 # ==============================================================================
 
+import glob
 import io
 import math
 import pandas as pd
@@ -50,7 +51,7 @@ st.markdown(
 def calculer_capacite_dynamique(df_vols):
     """Calcule automatiquement la capacité moyenne de traitement (pax/agent/h)
 
-    en analysant la typologie des vols (compagnie, transit, etc.).
+    en analysant la typologie des vols.
     """
     if df_vols.empty or "Compagnie" not in df_vols.columns:
         return 40.0
@@ -151,7 +152,7 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# 4. SIDEBAR ET CHARGEMENT PERMANENT (SESSION STATE)
+# 4. SIDEBAR ET CHARGEMENT AUTOMATIQUE / MULTI-DÉTECTION CSV
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -160,6 +161,7 @@ with st.sidebar:
         "Charger programme vols (CSV)", type=["csv"]
     )
 
+    # 1. Si un utilisateur téléverse manuellement un fichier
     if fichier_importe is not None:
         try:
             st.session_state["df_vols"] = charger_et_nettoyer_donnees(
@@ -169,14 +171,22 @@ with st.sidebar:
         except Exception as e:
             st.error(f"Erreur de lecture : {e}")
 
+    # 2. Détection automatique de n'importe quel CSV présent dans le projet
     if "df_vols" not in st.session_state:
-        try:
-            st.session_state["df_vols"] = charger_et_nettoyer_donnees(
-                "vols_aige.csv"
-            )
-            st.info("Source par défaut : vols_aige.csv")
-        except Exception:
-            st.error("Fichier 'vols_aige.csv' introuvable.")
+        fichiers_csv_locaux = glob.glob("*.csv")
+
+        if fichiers_csv_locaux:
+            fichier_trouve = fichiers_csv_locaux[0]
+            try:
+                st.session_state["df_vols"] = charger_et_nettoyer_donnees(
+                    fichier_trouve
+                )
+                st.info(f"Source détectée : {fichier_trouve}")
+            except Exception as e:
+                st.error(f"Erreur lors de la lecture de {fichier_trouve} : {e}")
+                st.stop()
+        else:
+            st.error("⚠️ Aucun fichier CSV trouvé dans le dépôt GitHub.")
             st.stop()
 
     df = st.session_state["df_vols"]
@@ -378,5 +388,4 @@ else:
 # 8. TABLEAU DE DONNÉES DÉTAILLÉ AVEC DÉFILEMENT (SCROLLBARS)
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
-    # Hauteur fixe de 400px : active automatiquement le défilement vertical et horizontal
     st.dataframe(df, height=400, hide_index=True)
