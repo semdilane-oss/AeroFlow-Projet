@@ -45,7 +45,7 @@ st.markdown(
 
 
 # ------------------------------------------------------------------------------
-# 2. FONCTIONS LOGIQUES ET ALGORITHME DE CAPACITÉ DYNAMIQUE
+# 2. FONCTIONS LOGIQUES ET TRAITEMENT DES DONNÉES
 # ------------------------------------------------------------------------------
 def calculer_capacite_dynamique(df_vols):
     """Calcule automatiquement la capacité moyenne de traitement (pax/agent/h)
@@ -151,7 +151,7 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# 4. SIDEBAR ET RECOMMANDATION DE GUICHETS
+# 4. SIDEBAR ET CHARGEMENT PERMANENT (SESSION STATE)
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -162,18 +162,24 @@ with st.sidebar:
 
     if fichier_importe is not None:
         try:
-            df = charger_et_nettoyer_donnees(fichier_importe)
-            st.success("Fichier chargé avec succès")
+            st.session_state["df_vols"] = charger_et_nettoyer_donnees(
+                fichier_importe
+            )
+            st.success("Fichier personnalisé actif")
         except Exception as e:
             st.error(f"Erreur de lecture : {e}")
-            st.stop()
-    else:
+
+    if "df_vols" not in st.session_state:
         try:
-            df = charger_et_nettoyer_donnees("vols_aige.csv")
-            st.info("Source : vols_aige.csv")
+            st.session_state["df_vols"] = charger_et_nettoyer_donnees(
+                "vols_aige.csv"
+            )
+            st.info("Source par défaut : vols_aige.csv")
         except Exception:
             st.error("Fichier 'vols_aige.csv' introuvable.")
             st.stop()
+
+    df = st.session_state["df_vols"]
 
     st.markdown("---")
 
@@ -332,19 +338,16 @@ if len(vols_critiques) > 0:
             )
 
             try:
-                # Flux binaire en mémoire (évite l'écriture disque physique)
                 fp = io.BytesIO()
                 tts = gTTS(text=message, lang="fr")
                 tts.write_to_fp(fp)
                 fp.seek(0)
 
-                # Conservation des octets dans l'état de session Streamlit
                 st.session_state["audio_bytes"] = fp.read()
                 st.session_state["message_texte"] = message
             except Exception as e:
                 st.error(f"Erreur de génération vocale : {e}")
 
-        # Affichage du lecteur audio interactif s'il a été généré
         if "audio_bytes" in st.session_state:
             st.audio(st.session_state["audio_bytes"], format="audio/mp3")
             st.info(
@@ -372,9 +375,8 @@ else:
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
-# 8. TABLEAU DE DONNÉES DÉTAILLÉ AVEC DÉFILEMENT (HAUTEUR FIXE)
+# 8. TABLEAU DE DONNÉES DÉTAILLÉ AVEC DÉFILEMENT (SCROLLBARS)
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
-    # En fixant une hauteur (ex: 400px) et hide_index=True, 
-    # Streamlit affiche automatiquement les scrollbars horizontale et verticale.
+    # Hauteur fixe de 400px : active automatiquement le défilement vertical et horizontal
     st.dataframe(df, height=400, hide_index=True)
