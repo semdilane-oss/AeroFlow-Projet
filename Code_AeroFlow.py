@@ -372,7 +372,9 @@ else:
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
-# 8. TABLEAU DE DONNÉES DÉTAILLÉ
+# 8. TABLEAU DE DONNÉES DÉTAILLÉ AVEC DÉFILEMENT (HAUTEUR FIXE)
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
-    st.dataframe(df, use_container_width=True)
+    # En fixant une hauteur (ex: 400px) et hide_index=True, 
+    # Streamlit affiche automatiquement les scrollbars horizontale et verticale.
+    st.dataframe(df, height=400, hide_index=True)
