@@ -5,9 +5,6 @@
 
 import io
 import math
-import os
-import time
-from gtts import gTTS
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -52,7 +49,7 @@ st.markdown(
 def calculer_capacite_dynamique(df_vols):
     """Calcule automatiquement la capacité moyenne de traitement (pax/agent/h)
 
-    en analysant le type de vol (compagnie, international vs régional, transit).
+    en analysant la typologie des vols (compagnie, transit, etc.).
     """
     if df_vols.empty or "Compagnie" not in df_vols.columns:
         return 40.0
@@ -61,13 +58,11 @@ def calculer_capacite_dynamique(df_vols):
     for _, row in df_vols.iterrows():
         compagnie = str(row.get("Compagnie", "")).upper()
 
-        # Profil régional / CEDEAO (contraintes passeport allégées) -> Traitement rapide
         if any(
             c in compagnie
             for c in ["ASKY", "CEIBA", "AIR COTE", "OVERLAND", "AIR PEACE"]
         ):
             cap_base = 50.0
-        # Profil Long-Courrier International (contrôles visas stricts) -> Traitement plus long
         elif any(
             c in compagnie
             for c in ["AIR FRANCE", "TURKISH", "BRUSSELS", "ROYAL AIR MAROC"]
@@ -78,7 +73,6 @@ def calculer_capacite_dynamique(df_vols):
         else:
             cap_base = 40.0
 
-        # Ajustement selon le taux de transit (le transfert direct est plus rapide)
         taux_t = row.get("Taux_Transit", 0.2)
         if taux_t > 0.35:
             cap_base += 5.0
@@ -142,23 +136,8 @@ def charger_et_nettoyer_donnees(source_fichier):
     return df_temp
 
 
-def generer_annonce_vocale(texte):
-    for file in os.listdir("."):
-        if file.startswith("annonce_") and file.endswith(".mp3"):
-            try:
-                os.remove(file)
-            except Exception:
-                pass
-
-    timestamp = int(time.time())
-    nom_fichier = f"annonce_{timestamp}.mp3"
-    tts = gTTS(text=texte, lang="fr")
-    tts.save(nom_fichier)
-    return nom_fichier
-
-
 # ------------------------------------------------------------------------------
-# 3. EN-TÊTE
+# 3. EN-TÊTE DE L'APPLICATION
 # ------------------------------------------------------------------------------
 st.markdown(
     '<div class="header-title">✈️ AeroFlow — Operations Control Center</div>',
@@ -171,7 +150,7 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# 4. SIDEBAR ET ESTIMATION AUTOMATIQUE
+# 4. SIDEBAR ET RECOMMANDATION DE GUICHETS
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -197,7 +176,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # CALCUL AUTOMATIQUE DE LA CAPACITÉ DYNAMIQUE ET DES GUICHETS RECOMMANDÉS
     capacite_agent_heure = calculer_capacite_dynamique(df)
 
     if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
@@ -228,7 +206,7 @@ with st.sidebar:
         )
 
 # ------------------------------------------------------------------------------
-# 5. CALCULS METIER ET KPIs
+# 5. KPIS & INDICATEURS CLÉS
 # ------------------------------------------------------------------------------
 vols_critiques = (
     df[df["Temps_Escale_Min"] <= 45]
@@ -272,7 +250,7 @@ with c4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 6. GRAPHIQUES LISIBLES ET AGRÉGÉS
+# 6. GRAPHIQUES ET ANALYSE
 # ------------------------------------------------------------------------------
 col_left, col_right = st.columns(2)
 
@@ -333,7 +311,7 @@ with col_right:
         st.plotly_chart(fig_transit, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 7. ALERTES ET ANNONCE VOCALE GLOBALE
+# 7. CENTRE D'ALERTES & ANNONCE VOCALE WEB SPEECH (SANS GTTS)
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("⚠️ Centre d'Alertes et Annonces")
@@ -351,10 +329,16 @@ if len(vols_critiques) > 0:
                 " Veuillez consulter le tableau de bord."
             )
 
-            fichier_audio = generer_annonce_vocale(message)
-            with open(fichier_audio, "rb") as f:
-                audio_bytes = f.read()
-            st.audio(audio_bytes, format="audio/mp3")
+            # Synthese vocale native HTML5 (Directe et sans risque de plantage réseau)
+            js_audio = f"""
+            <script>
+                var msg = new SpeechSynthesisUtterance("{message}");
+                msg.lang = 'fr-FR';
+                msg.rate = 0.95;
+                window.speechSynthesis.speak(msg);
+            </script>
+            """
+            st.components.v1.html(js_audio, height=0, width=0)
             st.info(f"Annonce diffusée : « {message} »")
 
     with col_info:
@@ -376,7 +360,7 @@ else:
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
-# 8. TABLEAU
+# 8. TABLEAU DE DONNÉES DETAILLÉ
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
     st.dataframe(df, use_container_width=True)
