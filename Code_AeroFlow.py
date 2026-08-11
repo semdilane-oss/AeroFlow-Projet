@@ -365,10 +365,23 @@ if len(vols_critiques) > 0:
             )
 
     with col_info:
-        st.warning(
-            f"⚠️ **{len(vols_critiques):,} vol(s) critique(s) détecté(s)**"
-            " (Escale ≤ 45 min)."
-        )
+     s = "s" if len(vols_critiques) > 1 else ""
+st.markdown(
+    f"""
+    <div style="
+        background-color: #DC2626; 
+        color: #FFFFFF; 
+        padding: 14px 18px; 
+        border-radius: 8px; 
+        font-weight: 700; 
+        font-size: 1.05rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 15px;">
+        ⚠️ {len(vols_critiques):,} vol{s} critique{s} détecté{s} (Escale ≤ 45 min)
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
     with st.container(height=280):
         for _, vol in vols_critiques.iterrows():
