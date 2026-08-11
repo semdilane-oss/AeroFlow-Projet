@@ -8,6 +8,7 @@ import math
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from gtts import gTTS
 
 # ------------------------------------------------------------------------------
 # 1. CONFIGURATION DE LA PAGE & DESIGN PREMIUM LIGHT / AÉRO
@@ -311,15 +312,16 @@ with col_right:
         st.plotly_chart(fig_transit, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 7. CENTRE D'ALERTES & ANNONCE VOCALE WEB SPEECH (SANS GTTS)
+# 7. CENTRE D'ALERTES & LECTEUR AUDIO INTERACTIF
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("⚠️ Centre d'Alertes et Annonces")
 
 if len(vols_critiques) > 0:
     col_btn, col_info = st.columns([1, 2])
+
     with col_btn:
-        if st.button("🔊 Diffuser l'Annonce Vocale Globale"):
+        if st.button("🔊 Générer / Réinitialiser l'Annonce Vocale"):
             nb_crit = len(vols_critiques)
             total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
             message = (
@@ -329,17 +331,25 @@ if len(vols_critiques) > 0:
                 " Veuillez consulter le tableau de bord."
             )
 
-            # Synthese vocale native HTML5 (Directe et sans risque de plantage réseau)
-            js_audio = f"""
-            <script>
-                var msg = new SpeechSynthesisUtterance("{message}");
-                msg.lang = 'fr-FR';
-                msg.rate = 0.95;
-                window.speechSynthesis.speak(msg);
-            </script>
-            """
-            st.components.v1.html(js_audio, height=0, width=0)
-            st.info(f"Annonce diffusée : « {message} »")
+            try:
+                # Flux binaire en mémoire (évite l'écriture disque physique)
+                fp = io.BytesIO()
+                tts = gTTS(text=message, lang="fr")
+                tts.write_to_fp(fp)
+                fp.seek(0)
+
+                # Conservation des octets dans l'état de session Streamlit
+                st.session_state["audio_bytes"] = fp.read()
+                st.session_state["message_texte"] = message
+            except Exception as e:
+                st.error(f"Erreur de génération vocale : {e}")
+
+        # Affichage du lecteur audio interactif s'il a été généré
+        if "audio_bytes" in st.session_state:
+            st.audio(st.session_state["audio_bytes"], format="audio/mp3")
+            st.info(
+                f"Annonce disponible : « {st.session_state['message_texte']} »"
+            )
 
     with col_info:
         st.warning(
@@ -357,10 +367,12 @@ if len(vols_critiques) > 0:
                 f" **{vol.get('Temps_Escale_Min', 0)} min**"
             )
 else:
+    if "audio_bytes" in st.session_state:
+        del st.session_state["audio_bytes"]
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
-# 8. TABLEAU DE DONNÉES DETAILLÉ
+# 8. TABLEAU DE DONNÉES DÉTAILLÉ
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
     st.dataframe(df, use_container_width=True)
