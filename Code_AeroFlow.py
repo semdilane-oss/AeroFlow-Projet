@@ -47,8 +47,48 @@ st.markdown(
 
 
 # ------------------------------------------------------------------------------
-# CHARGEMENT SANS LIMITE DE TAILLE (ILLIMITÉ)
+# 2. FONCTIONS LOGIQUES ET ALGORITHME DE CAPACITÉ DYNAMIQUE
 # ------------------------------------------------------------------------------
+def calculer_capacite_dynamique(df_vols):
+    """Calcule automatiquement la capacité moyenne de traitement (pax/agent/h)
+
+    en analysant le type de vol (compagnie, international vs régional, transit).
+    """
+    if df_vols.empty or "Compagnie" not in df_vols.columns:
+        return 40.0
+
+    capacites = []
+    for _, row in df_vols.iterrows():
+        compagnie = str(row.get("Compagnie", "")).upper()
+
+        # Profil régional / CEDEAO (contraintes passeport allégées) -> Traitement rapide
+        if any(
+            c in compagnie
+            for c in ["ASKY", "CEIBA", "AIR COTE", "OVERLAND", "AIR PEACE"]
+        ):
+            cap_base = 50.0
+        # Profil Long-Courrier International (contrôles visas stricts) -> Traitement plus long
+        elif any(
+            c in compagnie
+            for c in ["AIR FRANCE", "TURKISH", "BRUSSELS", "ROYAL AIR MAROC"]
+        ):
+            cap_base = 30.0
+        elif "ETHIOPIAN" in compagnie:
+            cap_base = 35.0
+        else:
+            cap_base = 40.0
+
+        # Ajustement selon le taux de transit (le transfert direct est plus rapide)
+        taux_t = row.get("Taux_Transit", 0.2)
+        if taux_t > 0.35:
+            cap_base += 5.0
+
+        capacites.append(cap_base)
+
+    df_vols["Capacite_Estimee"] = capacites
+    return round(float(pd.Series(capacites).mean()), 1)
+
+
 def charger_et_nettoyer_donnees(source_fichier):
     if isinstance(source_fichier, str):
         with open(source_fichier, "rb") as f:
@@ -118,7 +158,7 @@ def generer_annonce_vocale(texte):
 
 
 # ------------------------------------------------------------------------------
-# EN-TÊTE
+# 3. EN-TÊTE
 # ------------------------------------------------------------------------------
 st.markdown(
     '<div class="header-title">✈️ AeroFlow — Operations Control Center</div>',
@@ -131,7 +171,7 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# SIDEBAR ET CALCUL DYNAMIQUE DES GUICHETS
+# 4. SIDEBAR ET ESTIMATION AUTOMATIQUE
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -156,18 +196,26 @@ with st.sidebar:
             st.stop()
 
     st.markdown("---")
-    capacite_agent_heure = st.slider(
-        "Capacité traitement (pax/agent/h)", 20, 60, 40
-    )
+
+    # CALCUL AUTOMATIQUE DE LA CAPACITÉ DYNAMIQUE ET DES GUICHETS RECOMMANDÉS
+    capacite_agent_heure = calculer_capacite_dynamique(df)
 
     if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
         max_pax_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().max()
-        guichets_recommandes = max(1, math.ceil(max_pax_heure / capacite_agent_heure))
+        guichets_recommandes = max(
+            1, math.ceil(max_pax_heure / capacite_agent_heure)
+        )
     else:
         guichets_recommandes = 4
 
+    st.metric(
+        label="🤖 Capacité Estimée (Automatique)",
+        value=f"{capacite_agent_heure} pax/h/agent",
+        help="Calculé automatiquement selon la typologie des vols et des compagnies.",
+    )
+
     guichets_ouverts = st.slider(
-        "Guichets ouverts actuellement",
+        "Guichets ouverts sur le terrain",
         1,
         max(50, guichets_recommandes + 10),
         guichets_recommandes,
@@ -176,11 +224,11 @@ with st.sidebar:
     if guichets_ouverts < guichets_recommandes:
         st.warning(
             f"💡 **Recommandation :** Ouvrir au moins **{guichets_recommandes}"
-            " guichets** pour absorber les pics d'affluence."
+            " guichets** pour absorber la pointe de trafic."
         )
 
 # ------------------------------------------------------------------------------
-# CALCULS METIER ET KPIs
+# 5. CALCULS METIER ET KPIs
 # ------------------------------------------------------------------------------
 vols_critiques = (
     df[df["Temps_Escale_Min"] <= 45]
@@ -196,7 +244,7 @@ total_passagers = (
 total_transit = (
     int(df["Passagers_Transit"].sum()) if "Passagers_Transit" in df.columns else 0
 )
-capacite_totale = guichets_ouverts * capacite_agent_heure
+capacite_totale = int(guichets_ouverts * capacite_agent_heure)
 
 with c1:
     st.markdown(
