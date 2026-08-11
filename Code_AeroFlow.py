@@ -160,7 +160,6 @@ def charger_et_nettoyer_donnees(source_fichier):
 
 # Fonction de génération d'annonce vocale sécurisée
 def generer_annonce_vocale(texte):
-    # Nettoyage des anciens fichiers audio
     for file in os.listdir("."):
         if file.startswith("annonce_") and file.endswith(".mp3"):
             try:
@@ -217,7 +216,7 @@ with st.sidebar:
     capacite_agent_heure = st.slider(
         "Capacité traitement (pax/agent/h)", 20, 60, 40
     )
-    guichets_ouverts = st.slider("Guichets ouverts", 1, 10, 4)
+    guichets_ouverts = st.slider("Guichets ouverts", 1, 20, 4)
 
 # ------------------------------------------------------------------------------
 # 4. CALCULS ET MÉTIER
@@ -338,41 +337,59 @@ with col_right:
         st.plotly_chart(fig_transit, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 7. GESTION DES ALERTES ET SYNTHÈSE VOCALE SÉCURISÉE
+# 7. GESTION DES ALERTES ET SYNTHÈSE VOCALE SÉCURISÉE (OPTIMISÉE GRAND VOLUME)
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("⚠️ Centre d'Alertes et Annonces")
 
 if len(vols_critiques) > 0:
-    for _, vol in vols_critiques.iterrows():
-        st.error(
-            f"🔴 **ALERTE CORRESPONDANCE [Vol {vol.get('Vol', 'N/A')} -"
-            f" {vol.get('Compagnie', 'N/A')}]** : Arrivée à"
-            f" **{vol.get('Heure_Arrivee', 'N/A')}**. "
-            f"**{vol.get('Passagers_Transit', 0)} passagers en transit** avec"
-            f" seulement **{vol.get('Temps_Escale_Min', 0)} min** d'escale."
-        )
-
-    col_btn, _ = st.columns([1, 1])
+    # --- BOUTON VOCAL PLACÉ TOUT EN HAUT DES ALERTES ---
+    col_btn, col_info = st.columns([1, 2])
     with col_btn:
         if st.button("🔊 Diffuser l'Annonce Vocale Globale"):
-            phrases_vols = []
-            for _, vol in vols_critiques.iterrows():
-                phrases_vols.append(
-                    f"vol {vol.get('Vol', '')}, {vol.get('Passagers_Transit', 0)} passagers en transit, escale de {vol.get('Temps_Escale_Min', 0)} minutes."
+            nb_crit = len(vols_critiques)
+            if nb_crit <= 5:
+                phrases_vols = []
+                for _, vol in vols_critiques.iterrows():
+                    phrases_vols.append(
+                        f"vol {vol.get('Vol', '')}, {vol.get('Passagers_Transit', 0)} passagers en transit, escale de {vol.get('Temps_Escale_Min', 0)} minutes."
+                    )
+                message = (
+                    f"Attention PC Sécurité. Alerte correspondance urgente sur"
+                    f" {nb_crit} vols. " + " ".join(phrases_vols)
+                )
+            else:
+                total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
+                message = (
+                    f"Attention PC Sécurité. Alerte générale. Un total de"
+                    f" {nb_crit} vols critiques a été détecté, représentant"
+                    f" {total_pax_crit} passagers en correspondance rapide."
+                    " Veuillez consulter le tableau de bord."
                 )
 
-            message = (
-                f"Attention PC Sécurité. Alerte correspondance urgente sur"
-                f" {len(vols_critiques)} vol{'s' if len(vols_critiques) > 1 else ''}."
-                " " + " ".join(phrases_vols)
-            )
             fichier_audio = generer_annonce_vocale(message)
 
             with open(fichier_audio, "rb") as f:
                 audio_bytes = f.read()
             st.audio(audio_bytes, format="audio/mp3")
             st.info(f"Annonce diffusée : « {message} »")
+
+    with col_info:
+        st.warning(
+            f"⚠️ **{len(vols_critiques)} vol(s) critique(s) détecté(s)** (Escale"
+            " ≤ 45 min)."
+        )
+
+    # --- LISTE DES ALERTES DANS UNE BOÎTE AVEC DÉFILEMENT LIMITÉ (EVITE D'ALLONGER LA PAGE) ---
+    with st.container(height=280):
+        for _, vol in vols_critiques.iterrows():
+            st.error(
+                f"🔴 **[Vol {vol.get('Vol', 'N/A')} -"
+                f" {vol.get('Compagnie', 'N/A')}]** : Arrivée à"
+                f" **{vol.get('Heure_Arrivee', 'N/A')}** |"
+                f" **{vol.get('Passagers_Transit', 0)} pax transit** | Escale:"
+                f" **{vol.get('Temps_Escale_Min', 0)} min**"
+            )
 else:
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
