@@ -50,7 +50,6 @@ st.markdown(
 # ------------------------------------------------------------------------------
 def calculer_capacite_dynamique(df_vols):
     """Calcule automatiquement la capacité moyenne de traitement (pax/agent/h)
-
     en analysant la typologie des vols.
     """
     if df_vols.empty or "Compagnie" not in df_vols.columns:
@@ -113,15 +112,34 @@ def charger_et_nettoyer_donnees(source_fichier):
             r"Air C[ÃâÂ]te d['’]Ivoire", "Air Cote d'Ivoire", regex=True
         )
 
-    for col in ["Passagers", "Taux_Transit", "Temps_Escale_Min"]:
+    for col in ["Passagers", "Temps_Escale_Min"]:
         if col in df_temp.columns:
             df_temp[col] = pd.to_numeric(df_temp[col], errors="coerce")
 
-    if "Passagers" in df_temp.columns and "Taux_Transit" in df_temp.columns:
+    # --------------------------------------------------------------------------
+    # CALCUL AUTOMATIQUE DU TAUX DE TRANSIT (FALLBACK SI ABSENT OU NON RENSEIGNÉ)
+    # --------------------------------------------------------------------------
+    if "Taux_Transit" not in df_temp.columns or df_temp["Taux_Transit"].isnull().all():
+        taux_calcules = []
+        for _, row in df_temp.iterrows():
+            compagnie = str(row.get("Compagnie", "")).upper()
+            if "ASKY" in compagnie:
+                taux = 0.45
+            elif any(c in compagnie for c in ["AIR COTE", "CEIBA", "OVERLAND", "AIR PEACE"]):
+                taux = 0.35
+            elif any(c in compagnie for c in ["AIR FRANCE", "TURKISH", "BRUSSELS"]):
+                taux = 0.15
+            else:
+                taux = 0.25
+            taux_calcules.append(taux)
+        df_temp["Taux_Transit"] = taux_calcules
+    else:
+        df_temp["Taux_Transit"] = pd.to_numeric(df_temp["Taux_Transit"], errors="coerce").fillna(0.25)
+
+    # Calcul des effectifs transit et terminus
+    if "Passagers" in df_temp.columns:
         df_temp["Passagers_Transit"] = (
-            (df_temp["Passagers"] * df_temp["Taux_Transit"])
-            .fillna(0)
-            .astype(int)
+            (df_temp["Passagers"] * df_temp["Taux_Transit"]).fillna(0).round().astype(int)
         )
         df_temp["Passagers_Terminus"] = (
             df_temp["Passagers"] - df_temp["Passagers_Transit"]
