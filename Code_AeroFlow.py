@@ -366,7 +366,7 @@ if len(vols_critiques) > 0:
     col_btn, col_info = st.columns([1, 2])
 
     with col_btn:
-        # Style CSS pour mettre l'option sélectionnée en ROUGE
+        # Style CSS pour rendre le choix sélectionné ROUGE et bien visible
         st.markdown(
             """
             <style>
@@ -391,7 +391,7 @@ if len(vols_critiques) > 0:
             unsafe_allow_html=True,
         )
 
-        # Sélecteur de langue
+        # 1. Sélecteur de langue
         langue_choisie = st.radio(
             "🌐 Langue de l'annonce vocale :",
             options=["Français", "English"],
@@ -399,44 +399,42 @@ if len(vols_critiques) > 0:
             key="choix_langue_audio"
         )
 
-        if st.button("🔊 Générer / Réinitialiser l'Annonce Vocale"):
-            nb_crit = len(vols_critiques)
-            total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
+        # 2. Génération AUTOMATIQUE de l'audio et du message selon la langue sélectionnée
+        nb_crit = len(vols_critiques)
+        total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
 
-            # Vérification stricte de la valeur sélectionnée
-            if langue_choisie == "English":
-                code_lang = "en"
-                message = (
-                    f"Attention Security Control. General alert. A total of"
-                    f" {nb_crit} critical flights have been detected, representing"
-                    f" {total_pax_crit} passengers in tight connections."
-                    " Please check the control dashboard."
-                )
-            else:
-                code_lang = "fr"
-                message = (
-                    f"Attention PC Sécurité. Alerte générale. Un total de"
-                    f" {nb_crit} vols critiques a été détecté, représentant"
-                    f" {total_pax_crit} passagers en correspondance rapide."
-                    " Veuillez consulter le tableau de bord."
-                )
-
-            try:
-                fp = io.BytesIO()
-                tts = gTTS(text=message, lang=code_lang)
-                tts.write_to_fp(fp)
-                fp.seek(0)
-
-                st.session_state["audio_bytes"] = fp.read()
-                st.session_state["message_texte"] = message
-            except Exception as e:
-                st.error(f"Erreur de génération vocale : {e}")
-
-        if "audio_bytes" in st.session_state:
-            st.audio(st.session_state["audio_bytes"], format="audio/mp3")
-            st.info(
-                f"Annonce disponible : « {st.session_state['message_texte']} »"
+        if langue_choisie == "English":
+            code_lang = "en"
+            message = (
+                f"Attention Security Control. General alert. A total of"
+                f" {nb_crit} critical flights have been detected, representing"
+                f" {total_pax_crit} passengers in tight connections."
+                " Please check the control dashboard."
             )
+        else:
+            code_lang = "fr"
+            message = (
+                f"Attention PC Sécurité. Alerte générale. Un total de"
+                f" {nb_crit} vols critiques a été détecté, représentant"
+                f" {total_pax_crit} passagers en correspondance rapide."
+                " Veuillez consulter le tableau de bord."
+            )
+
+        # Génération dynamique à chaque changement de radio
+        try:
+            fp = io.BytesIO()
+            tts = gTTS(text=message, lang=code_lang)
+            tts.write_to_fp(fp)
+            fp.seek(0)
+            
+            audio_bytes = fp.read()
+
+            # Affichage direct et instantané de l'audio et du texte
+            st.audio(audio_bytes, format="audio/mp3")
+            st.info(f"Annonce disponible : « {message} »")
+
+        except Exception as e:
+            st.error(f"Erreur de génération vocale : {e}")
 
     with col_info:
         s = "s" if len(vols_critiques) > 1 else ""
@@ -467,8 +465,6 @@ if len(vols_critiques) > 0:
                 f" **{vol.get('Temps_Escale_Min', 0)} min**"
             )
 else:
-    if "audio_bytes" in st.session_state:
-        del st.session_state["audio_bytes"]
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
