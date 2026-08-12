@@ -366,11 +366,33 @@ if len(vols_critiques) > 0:
     col_btn, col_info = st.columns([1, 2])
 
     with col_btn:
-        # Sélecteur de langue pour l'annonce vocale
+        # Style spécifique pour garantir la lisibilité du sélecteur de langue
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stRadio"] {
+                background-color: #FFFFFF;
+                padding: 10px 14px;
+                border-radius: 8px;
+                border: 1px solid #CBD5E1;
+                margin-bottom: 12px;
+            }
+            div[data-testid="stRadio"] label p {
+                color: #0F172A !important;
+                font-weight: 700 !important;
+                font-size: 0.95rem !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Sélecteur de langue clair et bien visible
         langue_choisie = st.radio(
             "🌐 Langue de l'annonce vocale :",
             ["Français 🇫🇷", "English 🇬🇧"],
-            horizontal=True
+            horizontal=True,
+            key="select_langue_audio"
         )
 
         if st.button("🔊 Générer / Réinitialiser l'Annonce Vocale"):
@@ -378,7 +400,7 @@ if len(vols_critiques) > 0:
             total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
 
             # Adaptation du texte et du code langue selon la sélection
-            if langue_choisie == "English 🇬🇧":
+            if "English" in langue_choisie:
                 code_lang = "en"
                 message = (
                     f"Attention Security Control. General alert. A total of"
