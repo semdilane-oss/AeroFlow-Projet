@@ -170,13 +170,24 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# 4. SIDEBAR ET CHARGEMENT AUTOMATIQUE / MULTI-DÉTECTION CSV
+# 4. SIDEBAR ET CHARGEMENT AUTOMATIQUE / MULTI-DÉTECTION CSV & MODÈLE
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
 
+    st.subheader("📂 Données de vol")
     fichier_importe = st.file_uploader(
-        "Charger programme vols (CSV)", type=["csv"]
+        "Charger le programme des vols (CSV)", type=["csv"]
+    )
+
+    # Modèle CSV exemple à télécharger
+    csv_modele_exemple = "Vol,Compagnie,Heure_Arrivee,Passagers,Temps_Escale_Min,Taux_Transit\nKP010,ASKY,11:30,120,40,0.45\nAF850,Air France,14:15,280,90,0.15\nET901,Ethiopian Airlines,16:45,190,35,0.30"
+    st.download_button(
+        label="📥 Télécharger le modèle CSV exemple",
+        data=csv_modele_exemple,
+        file_name="modele_vols_aige.csv",
+        mime="text/csv",
+        help="Téléchargez ce fichier modèle vierge à remplir si vous n'avez pas de fichier prêt."
     )
 
     # 1. Si un utilisateur téléverse manuellement un fichier
@@ -346,7 +357,7 @@ with col_right:
         st.plotly_chart(fig_transit, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 7. CENTRE D'ALERTES & LECTEUR AUDIO INTERACTIF
+# 7. CENTRE D'ALERTES & LECTEUR AUDIO INTERACTIF MULTILINGUE
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("⚠️ Centre d'Alertes et Annonces")
@@ -355,19 +366,38 @@ if len(vols_critiques) > 0:
     col_btn, col_info = st.columns([1, 2])
 
     with col_btn:
+        # Sélecteur de langue pour l'annonce vocale
+        langue_choisie = st.radio(
+            "🌐 Langue de l'annonce vocale :",
+            ["Français 🇫🇷", "English 🇬🇧"],
+            horizontal=True
+        )
+
         if st.button("🔊 Générer / Réinitialiser l'Annonce Vocale"):
             nb_crit = len(vols_critiques)
             total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
-            message = (
-                f"Attention PC Sécurité. Alerte générale. Un total de"
-                f" {nb_crit} vols critiques a été détecté, représentant"
-                f" {total_pax_crit} passagers en correspondance rapide."
-                " Veuillez consulter le tableau de bord."
-            )
+
+            # Adaptation du texte et du code langue selon la sélection
+            if langue_choisie == "English 🇬🇧":
+                code_lang = "en"
+                message = (
+                    f"Attention Security Control. General alert. A total of"
+                    f" {nb_crit} critical flights have been detected, representing"
+                    f" {total_pax_crit} passengers in tight connections."
+                    " Please check the control dashboard."
+                )
+            else:
+                code_lang = "fr"
+                message = (
+                    f"Attention PC Sécurité. Alerte générale. Un total de"
+                    f" {nb_crit} vols critiques a été détecté, représentant"
+                    f" {total_pax_crit} passagers en correspondance rapide."
+                    " Veuillez consulter le tableau de bord."
+                )
 
             try:
                 fp = io.BytesIO()
-                tts = gTTS(text=message, lang="fr")
+                tts = gTTS(text=message, lang=code_lang)
                 tts.write_to_fp(fp)
                 fp.seek(0)
 
