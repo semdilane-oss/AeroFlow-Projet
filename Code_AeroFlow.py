@@ -154,10 +154,14 @@ st.markdown(
         font-weight: 600 !important;
     }}
     
-    div.stButton > button {{
+    div.stButton > button, div[data-testid="stFormSubmitButton"] > button {{
         background: {btn_bg_gradient} !important;
-        color: white !important; font-weight: 700 !important; border-radius: 8px !important;
-        border: none !important; padding: 10px 20px !important; width: 100%;
+        color: #FFFFFF !important; 
+        font-weight: 700 !important; 
+        border-radius: 8px !important;
+        border: none !important; 
+        padding: 10px 20px !important; 
+        width: 100%;
     }}
     
     div[data-testid="stChatMessage"] {{
