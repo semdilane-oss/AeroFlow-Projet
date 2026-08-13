@@ -564,11 +564,12 @@ if st.session_state["user_role"] == "passager":
             {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant virtuel d'AeroFlow. Comment puis-je vous aider pour votre voyage aujourd'hui ?", "Hello! I am AeroFlow's virtual assistant. How can I help you with your trip today?")}
         ]
 
+    # Disposition inversée : Affichage des messages au-dessus de la zone de saisie
     for message in st.session_state["messages_chat_pax"]:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Disposition intégrée (Zone de texte + Bouton micro côte à côte)
+    # Disposition intégrée (Zone de texte + Bouton micro côte à côte en bas)
     col_input_pax, col_mic_pax = st.columns([12, 1])
     
     with col_mic_pax:
@@ -587,8 +588,6 @@ if st.session_state["user_role"] == "passager":
 
     if prompt_pax:
         st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
-        with st.chat_message("user"):
-            st.markdown(prompt_pax)
 
         p_low = prompt_pax.lower()
         est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help"]) or langue_interface == "English"
@@ -610,8 +609,7 @@ if st.session_state["user_role"] == "passager":
             rep_pax = "Je suis l'assistant AeroFlow. Je peux vous renseigner sur votre porte d'embarquement, le statut des vols, les consignes bagages, les horaires d'enregistrement ou le passage des douanes à l'AIGE !" if not est_ang_pax else "I am the AeroFlow assistant. I can guide you regarding your boarding gate, flight status, baggage rules, check-in schedules, or customs at AIGE!"
 
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
-        with st.chat_message("assistant"):
-            st.markdown(rep_pax)
+        st.rerun()
 
 
 # ------------------------------------------------------------------------------
@@ -804,6 +802,7 @@ elif st.session_state["user_role"] == "agent":
             {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Comment puis-je vous aider aujourd'hui ?", "Hello! I am AeroFlow's intelligent assistant. How can I help you today?")}
         ]
 
+    # Disposition inversée : Affichage des messages au-dessus de la zone de saisie
     for message in st.session_state["messages_chat"]:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -826,8 +825,6 @@ elif st.session_state["user_role"] == "agent":
 
     if prompt_utilisateur:
         st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
-        with st.chat_message("user"):
-            st.markdown(prompt_utilisateur)
 
         p_lower = prompt_utilisateur.lower()
         est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help"]) or langue_interface == "English"
@@ -866,5 +863,4 @@ elif st.session_state["user_role"] == "agent":
                 reponse_bot = "Je suis l'assistant opérationnel d'AeroFlow. Vous pouvez m'interroger sur le nombre de passagers, les vols critiques, la capacité des guichets ou l'état du trafic à l'AIGE !"
 
         st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
-        with st.chat_message("assistant"):
-            st.markdown(reponse_bot)
+        st.rerun()
