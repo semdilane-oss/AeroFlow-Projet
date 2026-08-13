@@ -620,51 +620,100 @@ with exp_col3:
     else:
         st.warning("Module ReportLab indisponible. Ajoutez `reportlab` à votre environnement pour débloquer l'export PDF.")
 # ------------------------------------------------------------------------------
-# 10. ASSISTANT VIRTUEL D'EXPLOITATION (CHATBOT AIGE)
+# 10. ASSISTANT VIRTUEL D'EXPLOITATION VOCAL & TEXTE (AeroBot)
 # ------------------------------------------------------------------------------
 st.markdown("---")
-st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
+st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation (Vocal & Texte)")
+
+# Imports spécifiques pour la reconnaissance vocale
+try:
+    from streamlit_mic_recorder import mic_recorder
+    import speech_recognition as sr
+    VOICE_INPUT_AVAILABLE = True
+except ImportError:
+    VOICE_INPUT_AVAILABLE = False
 
 # Initialisation de l'historique de discussion
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = [
-        {"role": "assistant", "content": "Bonjour ! Je suis AeroBot, l'assistant d'exploitation de l'AIGE. Posez-moi une question sur le flux des passagers, les guichets ou les vols critiques."}
+        {"role": "assistant", "content": "Bonjour ! Je suis AeroBot. Posez-moi votre question par écrit ou cliquez sur le micro pour me parler !"}
     ]
 
 # Affichage des anciens messages
 for msg in st.session_state["messages_chat"]:
     st.chat_message(msg["role"]).write(msg["content"])
 
-# Zone de saisie utilisateur
-if prompt := st.chat_input("Posez votre question (ex: Quels sont les vols critiques ?, Combien de guichets ?)..."):
-    # Enregistrer le message de l'utilisateur
-    st.session_state["messages_chat"].append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
+prompt_utilisateur = None
 
-    # Logique de réponse basée sur les données réelles du tableau
-    question = prompt.lower()
+# Interface d'entrée (Micro + Texte)
+col_mic, col_txt = st.columns([1, 4])
+
+with col_mic:
+    if VOICE_INPUT_AVAILABLE:
+        st.write("🎙️ **Parler à AeroBot :**")
+        audio_recorded = mic_recorder(
+            start_prompt="🔴 Parler",
+            stop_prompt="⬛ Stopper",
+            key="mic_chat"
+        )
+        if audio_recorded and "bytes" in audio_recorded:
+            audio_bytes = audio_recorded["bytes"]
+            recognizer = sr.Recognizer()
+            try:
+                audio_file = io.BytesIO(audio_bytes)
+                with sr.AudioFile(audio_file) as source:
+                    audio_data = recognizer.record(source)
+                    prompt_utilisateur = recognizer.recognize_google(audio_data, language="fr-FR")
+                    st.success(f"🗣️ Entendu : « {prompt_utilisateur} »")
+            except Exception as e:
+                st.error("Désolé, je n'ai pas bien compris votre message vocal.")
+    else:
+        st.caption("🎙️ Installez `streamlit-mic-recorder` et `SpeechRecognition` pour activer le micro.")
+
+with col_txt:
+    prompt_texte = st.chat_input("Ou tapez votre question ici (ex: Quels sont les vols critiques ?)...")
+    if prompt_texte:
+        prompt_utilisateur = prompt_texte
+
+# Traitement de la question (Textuelle ou Vocale)
+if prompt_utilisateur:
+    # 1. Enregistrer la question utilisateur
+    st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
+    st.chat_message("user").write(prompt_utilisateur)
+
+    question = prompt_utilisateur.lower()
     reponse = ""
 
-    if "critique" in question or "risque" in question or "alerte" in question:
+    # 2. Logique de réponse
+    if any(k in question for k in ["critique", "risque", "alerte", "retard"]):
         if not vols_critiques.empty:
             nb = len(vols_critiques)
             pax_t = int(vols_critiques["Passagers_Transit"].sum())
-            reponse = f"⚠️ Nous avons **{nb} vol(s) critique(s)** (escale ≤ 45 min) représentant **{pax_t} passagers en transit rapide**.\n\n"
+            reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) représentant {pax_t} passagers en transit rapide.\n\n"
             for _, v in vols_critiques.iterrows():
-                reponse += f"- **Vol {v.get('Vol')}** ({v.get('Compagnie')}) : Arrivée à {v.get('Heure_Arrivee')}, Escale : {v.get('Temps_Escale_Min')} min.\n"
+                reponse += f"- Vol {v.get('Vol')} ({v.get('Compagnie')}) : Arrivée à {v.get('Heure_Arrivee')}, Escale : {v.get('Temps_Escale_Min')} min.\n"
         else:
-            reponse = "🟢 Aucun vol critique n'est à signaler pour le moment. La situation est sous contrôle !"
+            reponse = "🟢 Aucun vol critique n'est à signaler. La situation est fluide !"
 
-    elif "guichet" in question or "agent" in question or "capacit" in question:
-        reponse = f"💡 **Recommandation Guichets :** Actuellement, vous avez **{guichets_ouverts} guichet(s) ouvert(s)** sur le terrain.\n\n"
-        reponse += f"Pour absorber la pointe de trafic maximale avec la capacité moyenne estimée ({capacite_agent_heure} pax/h/agent), il est conseillé d'ouvrir au moins **{guichets_recommandes} guichets**."
+    elif any(k in question for k in ["guichet", "agent", "capacit", "ouvrir"]):
+        reponse = f"💡 **Recommandation Guichets :** Actuellement, vous avez {guichets_ouverts} guichet(s) ouvert(s).\n\nPour la pointe de trafic, il est conseillé d'ouvrir au moins {guichets_recommandes} guichets."
 
-    elif "passager" in question or "flux" in question or "total" in question:
-        reponse = f"📊 **Bilan du trafic du jour :**\n- Passagers totaux attendus : **{total_passagers:,} pax**\n- Dont passagers en transit : **{total_transit:,} pax**"
+    elif any(k in question for k in ["passager", "flux", "total", "monde"]):
+        reponse = f"📊 **Bilan du trafic du jour :**\n- Passagers totaux attendus : {total_passagers:,} pax\n- Dont passagers en transit : {total_transit:,} pax"
 
     else:
-        reponse = "🤖 Je peux vous informer sur : les **vols critiques**, la **recommandation de guichets**, ou le **total des passagers attendus**. Que souhaitez-vous savoir ?"
+        reponse = "🤖 Je peux vous informer sur : les vols critiques, la recommandation de guichets, ou le total des passagers attendus."
 
-    # Afficher et enregistrer la réponse du bot
+    # 3. Afficher et enregistrer la réponse
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
     st.chat_message("assistant").write(reponse)
+
+    # 4. Lecture vocale de la réponse d'AeroBot (Optionnel mais très classe !)
+    try:
+        tts_bot = gTTS(text=reponse.replace("*", ""), lang="fr")
+        fp_bot = io.BytesIO()
+        tts_bot.write_to_fp(fp_bot)
+        fp_bot.seek(0)
+        st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
+    except Exception:
+        pass
