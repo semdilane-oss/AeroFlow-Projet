@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - DESIGN EXECUTIVE & OPTIMISATION HAUT VOLUME
+# APPLICATION WEB STREAMLIT - DESIGN DYNAMIQUE (MODE CLAIR / SOMBRE)
 # ==============================================================================
 
 import glob
@@ -32,7 +32,7 @@ except ImportError:
 
 
 # ------------------------------------------------------------------------------
-# 1. CONFIGURATION DE LA PAGE & DESIGN GEMINI DARK / AÉRO
+# 1. CONFIGURATION DE LA PAGE
 # ------------------------------------------------------------------------------
 st.set_page_config(
     page_title="AeroFlow — Control Center AIGE",
@@ -41,51 +41,87 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown(
-    """
-<style>
-    /* Application du thème global moderne */
-    .stApp { background-color: #131314 !important; color: #E3E3E3 !important; }
+# Initialisation du thème dans le Session State (par défaut : Clair)
+if "theme_sombre" not in st.session_state:
+    st.session_state["theme_sombre"] = False
+
+# ------------------------------------------------------------------------------
+# 2. SELECTION DU THÈME DANS LA SIDEBAR & CSS DYNAMIQUE
+# ------------------------------------------------------------------------------
+with st.sidebar:
+    st.title("⚙️ Configuration")
     
-    .header-title { font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: #FFFFFF; }
-    .header-subtitle { color: #38BDF8; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }
+    # Bouton bascule du Mode Nuit / Mode Clair
+    mode_nuit = st.toggle("🌙 Mode Nuit (Sombre)", value=st.session_state["theme_sombre"])
+    st.session_state["theme_sombre"] = mode_nuit
+
+# Injection CSS dynamique selon le mode choisi
+if st.session_state["theme_sombre"]:
+    # THÈME SOMBRE
+    bg_app = "#131314"
+    text_main = "#E3E3E3"
+    card_bg = "#1E1F20"
+    border_color = "#444746"
+    title_color = "#FFFFFF"
+    plotly_template = "plotly_dark"
+    input_text_color = "#FFFFFF"
+else:
+    # THÈME CLAIR
+    bg_app = "#F8FAFC"
+    text_main = "#0F172A"
+    card_bg = "#FFFFFF"
+    border_color = "#CBD5E1"
+    title_color = "#0F172A"
+    plotly_template = "plotly_white"
+    input_text_color = "#0F172A"
+
+st.markdown(
+    f"""
+<style>
+    /* Application du thème global */
+    .stApp {{ background-color: {bg_app} !important; color: {text_main} !important; }}
+    
+    .header-title {{ font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: {title_color}; }}
+    .header-subtitle {{ color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
     
     /* KPI Containers */
-    .kpi-container {
-        background-color: #1E1F20; border: 1px solid #444746; border-radius: 12px;
-        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); border-top: 4px solid #38BDF8;
-    }
-    .kpi-container-alert { border-top: 4px solid #EF4444 !important; background-color: #2D1517; }
-    .kpi-label { font-size: 0.8rem; font-weight: 700; color: #9CA3AF; text-transform: uppercase; }
-    .kpi-val { font-size: 1.8rem; font-weight: 800; color: #FFFFFF; margin-top: 4px; }
+    .kpi-container {{
+        background-color: {card_bg}; border: 1px solid {border_color}; border-radius: 12px;
+        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
+    }}
+    .kpi-container-alert {{ border-top: 4px solid #EF4444 !important; background-color: {'#2D1517' if st.session_state['theme_sombre'] else '#FEF2F2'}; }}
+    .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'}; text-transform: uppercase; }}
+    .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
     /* Boutons */
-    div.stButton > button {
+    div.stButton > button {{
         background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
         color: white !important; font-weight: 700 !important; border-radius: 8px !important;
         border: none !important; padding: 10px 20px !important; width: 100%;
-    }
+    }}
     
     /* Affichage des messages du Chat */
-    .stChatMessage, .stChatMessage p, div[data-testid="stChatMessageContent"] {
-        color: #E3E3E3 !important;
+    .stChatMessage, .stChatMessage p, div[data-testid="stChatMessageContent"] {{
+        color: {text_main} !important;
+        font-weight: 500 !important;
         font-size: 1rem !important;
-    }
+    }}
 
     /* Style du formulaire type Capsule Gemini */
-    div[data-testid="stForm"] {
-        background-color: #1E1F20 !important;
-        border: 1px solid #444746 !important;
+    div[data-testid="stForm"] {{
+        background-color: {card_bg} !important;
+        border: 1px solid {border_color} !important;
         border-radius: 28px !important;
         padding: 6px 16px !important;
-    }
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+    }}
     
     /* Inscription texte dans la capsule */
-    div[data-testid="stForm"] input {
-        color: #FFFFFF !important;
+    div[data-testid="stForm"] input {{
+        color: {input_text_color} !important;
         background-color: transparent !important;
         border: none !important;
-    }
+    }}
 </style>
 """,
     unsafe_allow_html=True,
@@ -93,7 +129,7 @@ st.markdown(
 
 
 # ------------------------------------------------------------------------------
-# 2. FONCTIONS LOGIQUES ET TRAITEMENT DES DONNÉES
+# 3. FONCTIONS LOGIQUES ET TRAITEMENT DES DONNÉES
 # ------------------------------------------------------------------------------
 def calculer_capacite_dynamique(df_vols):
     if df_vols.empty or "Compagnie" not in df_vols.columns:
@@ -262,7 +298,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
 
 
 # ------------------------------------------------------------------------------
-# 3. EN-TÊTE DE L'APPLICATION
+# 4. EN-TÊTE DE L'APPLICATION
 # ------------------------------------------------------------------------------
 st.markdown(
     '<div class="header-title">✈️ AeroFlow — Operations Control Center</div>',
@@ -275,11 +311,10 @@ st.markdown(
 )
 
 # ------------------------------------------------------------------------------
-# 4. SIDEBAR ET CHARGEMENT AUTOMATIQUE
+# 5. CONTINUATION SIDEBAR (CHARGEMENT DONNÉES & SLIDERS)
 # ------------------------------------------------------------------------------
 with st.sidebar:
-    st.title("⚙️ Configuration")
-
+    st.markdown("---")
     st.subheader("📂 Données de vol")
     fichier_importe = st.file_uploader(
         "Charger le programme des vols (CSV)", type=["csv"]
@@ -352,7 +387,7 @@ with st.sidebar:
         )
 
 # ------------------------------------------------------------------------------
-# 5. KPIS & INDICATEURS CLÉS
+# 6. KPIS & INDICATEURS CLÉS
 # ------------------------------------------------------------------------------
 vols_critiques = (
     df[df["Temps_Escale_Min"] <= 45]
@@ -380,7 +415,7 @@ with c4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 6. GRAPHIQUES ET ANALYSE
+# 7. GRAPHIQUES ET ANALYSE (ADAPTATIFS SELON LE THÈME)
 # ------------------------------------------------------------------------------
 col_left, col_right = st.columns(2)
 
@@ -388,7 +423,7 @@ with col_left:
     st.subheader("📊 Affluence Globale par Tranche Horaire")
     if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
         df_affluence_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
-        fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template="plotly_dark")
+        fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template=plotly_template)
         fig_affluence.update_layout(xaxis_title="Tranche Horaire", yaxis_title="Total Passagers", margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_affluence, use_container_width=True)
 
@@ -401,12 +436,12 @@ with col_right:
         df_escale_group = df["Plage_Escale"].value_counts().reset_index()
         df_escale_group.columns = ["Plage_Escale", "Nombre_de_Vols"]
 
-        fig_transit = px.bar(df_escale_group, x="Plage_Escale", y="Nombre_de_Vols", color="Nombre_de_Vols", color_continuous_scale="Reds_r", text_auto=True, template="plotly_dark")
+        fig_transit = px.bar(df_escale_group, x="Plage_Escale", y="Nombre_de_Vols", color="Nombre_de_Vols", color_continuous_scale="Reds_r", text_auto=True, template=plotly_template)
         fig_transit.update_layout(xaxis_title="Plage de Temps d'Escale", yaxis_title="Nombre de Vols", margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_transit, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 7. CENTRE D'ALERTES & LECTEUR AUDIO INTERACTIF
+# 8. CENTRE D'ALERTES & LECTEUR AUDIO INTERACTIF
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("⚠️ Centre d'Alertes et Annonces")
@@ -445,13 +480,13 @@ else:
     st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
 # ------------------------------------------------------------------------------
-# 8. TABLEAU DE DONNÉES DÉTAILLÉ
+# 9. TABLEAU DE DONNÉES DÉTAILLÉ
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
     st.dataframe(df, height=400, hide_index=True)
 
 # ------------------------------------------------------------------------------
-# 9. CENTRE D'EXPORTATION & RAPPORTS
+# 10. CENTRE D'EXPORTATION & RAPPORTS
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("📥 Exportation & Rapports d'Exploitation")
@@ -477,7 +512,7 @@ with exp_col3:
         st.warning("Module ReportLab indisponible pour l'export PDF.")
 
 # ------------------------------------------------------------------------------
-# 10. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot - Style Gemini)
+# 11. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot - Style Gemini)
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
