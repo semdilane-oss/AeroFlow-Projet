@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - MIS À JOUR (AVATION DE LOMÉ & BOUTON VERT)
+# APPLICATION WEB STREAMLIT - CODE COMPLET & BILINGUE (FR / EN)
 # ==============================================================================
 
 import glob
@@ -45,7 +45,7 @@ if "theme_sombre" not in st.session_state:
     st.session_state["theme_sombre"] = False
 
 if "user_role" not in st.session_state:
-    st.session_state["user_role"] = None
+    st.session_state["user_role"] = None  # 'passager', 'agent', None
 
 if "current_user" not in st.session_state:
     st.session_state["current_user"] = ""
@@ -53,6 +53,7 @@ if "current_user" not in st.session_state:
 if "db_passagers" not in st.session_state:
     st.session_state["db_passagers"] = {}
 
+# Identifiants STRICTS des agents ANAC / PC Sécurité (Mots de passe >= 6 caractères)
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
     "agent_p2": "lome2026"
@@ -60,12 +61,20 @@ AGENT_CREDENTIALS = {
 
 
 # ------------------------------------------------------------------------------
-# 2. THÈME & CSS DYNAMIQUE (BOUTON VERT POUR LA CONNEXION AGENT)
+# 2. SELECTION DU THÈME, DE LA LANGUE & CSS DYNAMIQUE
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
+    
+    # Sélecteur de langue global
+    langue_interface = st.selectbox("🌐 Langue / Language", ["Français", "English"])
+    
     mode_nuit = st.toggle("🌙 Mode Nuit (Sombre)", value=st.session_state["theme_sombre"])
     st.session_state["theme_sombre"] = mode_nuit
+
+# Fonction de traduction rapide (i18n)
+def t(texte_fr, texte_en):
+    return texte_fr if langue_interface == "Français" else texte_en
 
 if st.session_state["theme_sombre"]:
     bg_app = "#131314"
@@ -149,12 +158,6 @@ st.markdown(
         border: none !important; padding: 10px 20px !important; width: 100%;
     }}
     
-    /* Bouton spécifique de connexion agent en VERT */
-    div[data-testid="stForm"]:nth-of-type(2) div.stButton > button,
-    form div.stButton > button {{
-        /* On applique le style général ou spécifique si besoin */
-    }}
-
     div[data-testid="stChatMessage"] {{
         background-color: {chat_bg} !important;
         border-radius: 8px !important;
@@ -198,11 +201,6 @@ st.markdown(
         -webkit-text-fill-color: {placeholder_color} !important;
         opacity: 1 !important;
     }}
-    
-    /* Classe utilitaire pour forcer un bouton vert */
-    .btn-vert button {{
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
-    }}
 </style>
 """,
     unsafe_allow_html=True,
@@ -219,6 +217,7 @@ def calculer_capacite_dynamique(df_vols):
     capacites = []
     for _, row in df_vols.iterrows():
         compagnie = str(row.get("Compagnie", "")).upper()
+
         if any(c in compagnie for c in ["ASKY", "CEIBA", "AIR COTE", "OVERLAND", "AIR PEACE"]):
             cap_base = 50.0
         elif any(c in compagnie for c in ["AIR FRANCE", "TURKISH", "BRUSSELS", "ROYAL AIR MAROC"]):
@@ -231,6 +230,7 @@ def calculer_capacite_dynamique(df_vols):
         taux_t = row.get("Taux_Transit", 0.2)
         if taux_t > 0.35:
             cap_base += 5.0
+
         capacites.append(cap_base)
 
     df_vols["Capacite_Estimee"] = capacites
@@ -248,6 +248,7 @@ def charger_et_nettoyer_donnees(source_fichier):
         contenu_octets = contenu_octets[3:]
 
     contenu_texte = contenu_octets.decode("utf-8", errors="ignore")
+
     premiere_ligne = contenu_texte.splitlines()[0] if contenu_texte else ""
     separateur = ","
     if premiere_ligne.count(";") > premiere_ligne.count(","):
@@ -380,51 +381,58 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
 # ------------------------------------------------------------------------------
 
 if st.session_state["user_role"] is None:
-    st.markdown('<div class="header-title">🛫 Bienvenue sur AeroFlow — AIGE Lomé</div>', unsafe_allow_html=True)
-    st.markdown('<div class="header-subtitle">Veuillez choisir votre espace pour accéder à la plateforme.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="header-title">{t("🛫 Bienvenue sur AeroFlow — AIGE Lomé", "🛫 Welcome to AeroFlow — AIGE Lomé")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="header-subtitle">{t("Veuillez choisir votre espace pour accéder à la plateforme.", "Please choose your space to access the platform.")}</div>', unsafe_allow_html=True)
 
-    tab_passager, tab_agent = st.tabs(["👤 Espace Passager", "🛡️ Espace Agent Aviation de Lomé / PC Sécurité"])
+    tab_passager, tab_agent = st.tabs([
+        t("👤 Espace Passager", "👤 Passenger Area"), 
+        t("🛡️ Espace Agent ANAC / PC Sécurité", "🛡️ ANAC / Security PC Area")
+    ])
 
     with tab_passager:
-        st.subheader("Accès Voyageurs & Passagers")
+        st.subheader(t("Accès Voyageurs & Passagers", "Traveler & Passenger Access"))
         
         mode_passager = st.radio(
-            "Action :", 
-            ["Se connecter", "Première connexion (Activer mon compte)", "Mot de passe oublié ?"],
+            t("Action :", "Action:"), 
+            [
+                t("Se connecter", "Sign In"), 
+                t("Première connexion (Activer mon compte)", "First login (Activate my account)"), 
+                t("Mot de passe oublié ?", "Forgot password?")
+            ],
             horizontal=True,
             key="radio_mode_pax"
         )
 
-        afficher_mdp_pax = st.checkbox("👁️ Afficher les caractères en clair", key="chk_pax_visible")
+        afficher_mdp_pax = st.checkbox(t("👁️ Afficher les caractères en clair", "👁️ Show plain text characters"), key="chk_pax_visible")
         input_type_pax = "default" if afficher_mdp_pax else "password"
 
-        if mode_passager == "Première connexion (Activer mon compte)":
-            st.info("💡 Indiquez votre numéro de vol ou email, puis définissez votre mot de passe (6 caractères minimum).")
+        if mode_passager == t("Première connexion (Activer mon compte)", "First login (Activate my account)"):
+            st.info(t("💡 Indiquez votre numéro de vol ou email, puis définissez votre mot de passe (6 caractères minimum).", "💡 Enter your flight number or email, then set your password (minimum 6 characters)."))
             with st.form("form_inscription_pax"):
-                pax_id = st.text_input("Numéro de Vol ou Email", placeholder="ex: KP010 ou passager@gmail.com")
-                pax_pass1 = st.text_input("Créer un mot de passe (min. 6 caractères)", type=input_type_pax)
-                pax_pass2 = st.text_input("Confirmer le mot de passe", type=input_type_pax)
-                btn_creer = st.form_submit_button("Activer mon espace voyageur")
+                pax_id = st.text_input(t("Numéro de Vol ou Email", "Flight Number or Email"), placeholder="ex: KP010 ou passager@gmail.com")
+                pax_pass1 = st.text_input(t("Créer un mot de passe (min. 6 caractères)", "Create a password (min. 6 chars)"), type=input_type_pax)
+                pax_pass2 = st.text_input(t("Confirmer le mot de passe", "Confirm password"), type=input_type_pax)
+                btn_creer = st.form_submit_button(t("Activer mon espace voyageur", "Activate my traveler space"))
 
                 if btn_creer:
                     if not pax_id or not pax_pass1:
-                        st.error("Veuillez remplir tous les champs.")
+                        st.error(t("Veuillez remplir tous les champs.", "Please fill in all fields."))
                     elif len(pax_pass1) < 6:
-                        st.error("⚠️ Le mot de passe doit contenir au moins 6 caractères.")
+                        st.error(t("⚠️ Le mot de passe doit contenir au moins 6 caractères.", "⚠️ Password must contain at least 6 characters."))
                     elif pax_pass1 != pax_pass2:
-                        st.error("Les mots de passe ne correspondent pas.")
+                        st.error(t("Les mots de passe ne correspondent pas.", "Passwords do not match."))
                     else:
                         st.session_state["db_passagers"][pax_id] = pax_pass1
                         st.session_state["user_role"] = "passager"
                         st.session_state["current_user"] = pax_id
-                        st.success("Compte activé avec succès !")
+                        st.success(t("Compte activé avec succès !", "Account successfully activated!"))
                         st.rerun()
 
-        elif mode_passager == "Se connecter":
+        elif mode_passager == t("Se connecter", "Sign In"):
             with st.form("form_login_pax"):
-                pax_id = st.text_input("Numéro de Vol ou Email")
-                pax_pass = st.text_input("Mot de passe", type=input_type_pax)
-                btn_login_pax = st.form_submit_button("Se connecter")
+                pax_id = st.text_input(t("Numéro de Vol ou Email", "Flight Number or Email"))
+                pax_pass = st.text_input(t("Mot de passe", "Password"), type=input_type_pax)
+                btn_login_pax = st.form_submit_button(t("Se connecter", "Sign In"))
 
                 if btn_login_pax:
                     if pax_id in st.session_state["db_passagers"] and st.session_state["db_passagers"][pax_id] == pax_pass:
@@ -432,42 +440,38 @@ if st.session_state["user_role"] is None:
                         st.session_state["current_user"] = pax_id
                         st.rerun()
                     else:
-                        st.error("Identifiant ou mot de passe incorrect.")
+                        st.error(t("Identifiant ou mot de passe incorrect.", "Incorrect ID or password."))
 
         else:  
-            st.warning("🔄 Réinitialisation de votre mot de passe voyageur (6 caractères minimum)")
+            st.warning(t("🔄 Réinitialisation de votre mot de passe voyageur (6 caractères minimum)", "🔄 Reset your traveler password (minimum 6 characters)"))
             with st.form("form_oubli_pax"):
-                pax_id_reset = st.text_input("Votre Numéro de Vol ou Email enregistré")
-                pax_nouveau_pass = st.text_input("Nouveau mot de passe (min. 6 caractères)", type=input_type_pax)
-                btn_reset_pax = st.form_submit_button("Mettre à jour mon mot de passe")
+                pax_id_reset = st.text_input(t("Votre Numéro de Vol ou Email enregistré", "Your registered Flight Number or Email"))
+                pax_nouveau_pass = st.text_input(t("Nouveau mot de passe (min. 6 caractères)", "New password (min. 6 chars)"), type=input_type_pax)
+                btn_reset_pax = st.form_submit_button(t("Mettre à jour mon mot de passe", "Update my password"))
 
                 if btn_reset_pax:
                     if pax_id_reset not in st.session_state["db_passagers"]:
-                        st.error("Cet identifiant n'est associé à aucun compte enregistré.")
+                        st.error(t("Cet identifiant n'est associé à aucun compte enregistré.", "This ID is not associated with any registered account."))
                     elif len(pax_nouveau_pass) < 6:
-                        st.error("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.")
+                        st.error(t("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.", "⚠️ The new password must contain at least 6 characters."))
                     else:
                         st.session_state["db_passagers"][pax_id_reset] = pax_nouveau_pass
-                        st.success("Mot de passe modifié avec succès ! Vous pouvez vous connecter.")
+                        st.success(t("Mot de passe modifié avec succès ! Vous pouvez vous connecter.", "Password updated successfully! You can now log in."))
 
     with tab_agent:
-        st.subheader("Accès Sécurisé — Régulation & PC Sécurité")
-        
-        # MODIFICATION 1 : "Aviation de Lomé" appliqué ici dans le message d'alerte
-        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ Zone protégée réservée aux agents habilités de l\'Aviation de Lomé. Les identifiants sont strictement contrôlés.</div>', unsafe_allow_html=True)
+        st.subheader(t("Accès Sécurisé — Régulation & PC Sécurité", "Secure Access — Regulation & Security PC"))
+        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #EF4444;">{t("⚠️ Zone protégée réservée aux agents habilités de l\'ANAC. Les identifiants sont strictement contrôlés.", "⚠️ Protected area reserved for authorized ANAC officers. Credentials are strictly controlled.")}</div>', unsafe_allow_html=True)
 
-        afficher_mdp_agent = st.checkbox("👁️ Afficher les caractères en clair", key="chk_agent_visible")
+        afficher_mdp_agent = st.checkbox(t("👁️ Afficher les caractères en clair", "👁️ Show plain text characters"), key="chk_agent_visible")
         input_type_agent = "default" if afficher_mdp_agent else "password"
 
-        mode_agent = st.radio("Option agent :", ["Connexion", "Modifier mon mot de passe agent"], horizontal=True)
+        mode_agent = st.radio(t("Option agent :", "Agent option:"), [t("Connexion", "Sign In"), t("Modifier mon mot de passe agent", "Change agent password")], horizontal=True)
 
-        if mode_agent == "Connexion":
-            # MODIFICATION 2 : Conteneur avec classe CSS .btn-vert pour rendre le bouton de connexion VERT
-            st.markdown('<div class="btn-vert">', unsafe_allow_html=True)
+        if mode_agent == t("Connexion", "Sign In"):
             with st.form("form_login_agent"):
-                agent_user = st.text_input("Identifiant Agent officiel (ex: admin_anac)")
-                agent_pass = st.text_input("Mot de passe", type=input_type_agent)
-                btn_login_agent = st.form_submit_button("Connexion d'exploitation")
+                agent_user = st.text_input(t("Identifiant Agent officiel (ex: admin_anac)", "Official Agent ID (e.g. admin_anac)"))
+                agent_pass = st.text_input(t("Mot de passe", "Password"), type=input_type_agent)
+                btn_login_agent = st.form_submit_button(t("Connexion d'exploitation", "Operational Sign In"))
 
                 if btn_login_agent:
                     if agent_user in AGENT_CREDENTIALS and AGENT_CREDENTIALS[agent_user] == agent_pass:
@@ -475,24 +479,23 @@ if st.session_state["user_role"] is None:
                         st.session_state["current_user"] = agent_user
                         st.rerun()
                     else:
-                        st.error("⚠️ Accès refusé. Identifiant ou mot de passe agent invalide.")
-            st.markdown('</div>', unsafe_allow_html=True)
+                        st.error(t("⚠️ Accès refusé. Identifiant ou mot de passe agent invalide.", "⚠️ Access denied. Invalid agent ID or password."))
         else:
             with st.form("form_reset_agent"):
-                st.info("Modifiez votre mot de passe agent (6 caractères minimum requis).")
-                agent_user_r = st.text_input("Identifiant Agent officiel")
-                ancien_p = st.text_input("Ancien mot de passe", type=input_type_agent)
-                nouveau_p = st.text_input("Nouveau mot de passe (min. 6 caractères)", type=input_type_agent)
-                btn_chg_agent = st.form_submit_button("Changer mon mot de passe")
+                st.info(t("Modifiez votre mot de passe agent (6 caractères minimum requis).", "Update your agent password (minimum 6 characters required)."))
+                agent_user_r = st.text_input(t("Identifiant Agent officiel", "Official Agent ID"))
+                ancien_p = st.text_input(t("Ancien mot de passe", "Old password"), type=input_type_agent)
+                nouveau_p = st.text_input(t("Nouveau mot de passe (min. 6 caractères)", "New password (min. 6 chars)"), type=input_type_agent)
+                btn_chg_agent = st.form_submit_button(t("Changer mon mot de passe", "Change my password"))
 
                 if btn_chg_agent:
                     if agent_user_r not in AGENT_CREDENTIALS or AGENT_CREDENTIALS[agent_user_r] != ancien_p:
-                        st.error("Identifiant ou ancien mot de passe incorrect.")
+                        st.error(t("Identifiant ou ancien mot de passe incorrect.", "Incorrect ID or old password."))
                     elif len(nouveau_p) < 6:
-                        st.error("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.")
+                        st.error(t("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.", "⚠️ The new password must contain at least 6 characters."))
                     else:
                         AGENT_CREDENTIALS[agent_user_r] = nouveau_p
-                        st.success("Mot de passe agent mis à jour avec succès !")
+                        st.success(t("Mot de passe agent mis à jour avec succès !", "Agent password successfully updated!"))
 
     st.stop()
 
@@ -502,28 +505,28 @@ if st.session_state["user_role"] is None:
 # ------------------------------------------------------------------------------
 
 if st.session_state["user_role"] == "passager":
-    st.sidebar.title("👤 Espace Voyageur")
-    st.sidebar.write(f"Passager connecté : **{st.session_state['current_user']}**")
-    if st.sidebar.button("Déconnexion"):
+    st.sidebar.title(t("👤 Espace Voyageur", "👤 Traveler Area"))
+    st.sidebar.write(f"{t('Passager connecté :', 'Logged-in passenger:')} **{st.session_state['current_user']}**")
+    if st.sidebar.button(t("Déconnexion", "Sign Out")):
         st.session_state["user_role"] = None
         st.rerun()
 
-    st.markdown('<div class="header-title">✈️ Votre Espace Voyage — AIGE Lomé</div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="background-color: {success_bg}; color: {success_text}; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 20px;">Bienvenue ! Retrouvez ici les informations de vol et services utiles.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="header-title">{t("✈️ Votre Espace Voyage — AIGE Lomé", "✈️ Your Travel Space — AIGE Lomé")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background-color: {success_bg}; color: {success_text}; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 20px;">{t("Bienvenue ! Retrouvez ici les informations de vol et services utiles.", "Welcome! Find your flight information and useful services here.")}</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="kpi-container"><div class="kpi-label">Statut du Vol</div><div class="kpi-val" style="color: #10B981;">À l\'heure 🟢</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Statut du Vol", "Flight Status")}</div><div class="kpi-val" style="color: #10B981;">{t("À l\\'heure 🟢", "On Time 🟢")}</div></div>', unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<div class="kpi-container"><div class="kpi-label">Porte d\'Embarquement</div><div class="kpi-val">Porte 02</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Porte d\'Embarquement", "Boarding Gate")}</div><div class="kpi-val">{t("Porte 02", "Gate 02")}</div></div>', unsafe_allow_html=True)
     with c2:
-        st.markdown('<div class="kpi-container"><div class="kpi-label">Zone d\'Enregistrement</div><div class="kpi-val">Guichets 01 à 04</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Zone d\'Enregistrement", "Check-in Zone")}</div><div class="kpi-val">{t("Guichets 01 à 04", "Counters 01 to 04")}</div></div>', unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<div class="kpi-container"><div class="kpi-label">Livraison Bagages</div><div class="kpi-val">Tapis 1</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Livraison Bagages", "Baggage Claim")}</div><div class="kpi-val">{t("Tapis 1", "Belt 1")}</div></div>', unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------------------------
-# 6. VUE ESPACE AGENT AVIATION DE LOMÉ / PC SÉCURITÉ
+# 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ
 # ------------------------------------------------------------------------------
 
 elif st.session_state["user_role"] == "agent":
@@ -531,17 +534,17 @@ elif st.session_state["user_role"] == "agent":
     with st.sidebar:
         st.markdown("---")
         st.write(f"🛡️ Agent : **{st.session_state['current_user']}**")
-        if st.button("Déconnexion Sécurisée"):
+        if st.button(t("Déconnexion Sécurisée", "Secure Sign Out")):
             st.session_state["user_role"] = None
             st.rerun()
 
         st.markdown("---")
-        st.subheader("📂 Données de vol")
-        fichier_importe = st.file_uploader("Charger le programme des vols (CSV)", type=["csv"])
+        st.subheader(t("📂 Données de vol", "📂 Flight Data"))
+        fichier_importe = st.file_uploader(t("Charger le programme des vols (CSV)", "Upload flight schedule (CSV)"), type=["csv"])
 
         csv_modele_exemple = "Vol,Compagnie,Heure_Arrivee,Passagers,Temps_Escale_Min,Taux_Transit\nKP010,ASKY,11:30,120,40,0.45\nAF850,Air France,14:15,280,90,0.15\nET901,Ethiopian Airlines,16:45,190,35,0.30"
         st.download_button(
-            label="📥 Télécharger le modèle CSV exemple",
+            label=t("📥 Télécharger le modèle CSV exemple", "📥 Download sample CSV template"),
             data=csv_modele_exemple,
             file_name="modele_vols_aige.csv",
             mime="text/csv",
@@ -550,9 +553,9 @@ elif st.session_state["user_role"] == "agent":
         if fichier_importe is not None:
             try:
                 st.session_state["df_vols"] = charger_et_nettoyer_donnees(fichier_importe)
-                st.success("Fichier personnalisé actif")
+                st.success(t("Fichier personnalisé actif", "Custom file active"))
             except Exception as e:
-                st.error(f"Erreur de lecture : {e}")
+                st.error(f"{t('Erreur de lecture :', 'Reading error:')} {e}")
 
         if "df_vols" not in st.session_state:
             fichiers_csv_locaux = glob.glob("*.csv")
@@ -560,12 +563,12 @@ elif st.session_state["user_role"] == "agent":
                 fichier_trouve = fichiers_csv_locaux[0]
                 try:
                     st.session_state["df_vols"] = charger_et_nettoyer_donnees(fichier_trouve)
-                    st.info(f"Source détectée : {fichier_trouve}")
+                    st.info(f"{t('Source détectée :', 'Detected source:')} {fichier_trouve}")
                 except Exception as e:
-                    st.error(f"Erreur lors de la lecture de {fichier_trouve} : {e}")
+                    st.error(f"{t('Erreur lors de la lecture de', 'Error reading')} {fichier_trouve} : {e}")
                     st.stop()
             else:
-                st.error("⚠️ Aucun fichier CSV trouvé dans le dépôt GitHub.")
+                st.error(t("⚠️ Aucun fichier CSV trouvé dans le dépôt GitHub.", "⚠️ No CSV file found in the GitHub repository."))
                 st.stop()
 
         df = st.session_state["df_vols"]
@@ -579,20 +582,20 @@ elif st.session_state["user_role"] == "agent":
         else:
             guichets_recommandes = 4
 
-        st.metric(label="🤖 Capacité Estimée (Automatique)", value=f"{capacite_agent_heure} pax/h/agent")
+        st.metric(label=t("🤖 Capacité Estimée (Automatique)", "🤖 Estimated Capacity (Automatic)"), value=f"{capacite_agent_heure} {t('pax/h/agent', 'pax/h/agent')}")
 
         guichets_ouverts = st.slider(
-            "Guichets ouverts sur le terrain",
+            t("Guichets ouverts sur le terrain", "Counters open on site"),
             1,
             max(50, guichets_recommandes + 10),
             guichets_recommandes,
         )
 
         if guichets_ouverts < guichets_recommandes:
-            st.warning(f"💡 **Recommandation :** Ouvrir au moins **{guichets_recommandes} guichets** pour absorber la pointe.")
+            st.warning(f"💡 **{t('Recommandation :', 'Recommendation:')}** {t('Ouvrir au moins', 'Open at least')} **{guichets_recommandes} {t('guichets', 'counters')}** {t('pour absorber la pointe.', 'to handle the peak.')}")
 
-    st.markdown('<div class="header-title">✈️ AeroFlow — Operations Control Center</div>', unsafe_allow_html=True)
-    st.markdown('<div class="header-subtitle">Aéroport International Gnassingbé Eyadéma (AIGE) | Aviation de Lomé & PC Sécurité</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="header-title">{t("✈️ AeroFlow — Operations Control Center", "✈️ AeroFlow — Operations Control Center")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="header-subtitle">{t("Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & ANAC", "Gnassingbé Eyadéma International Airport (AIGE) | Security PC & ANAC")}</div>', unsafe_allow_html=True)
 
     vols_critiques = df[df["Temps_Escale_Min"] <= 45] if "Temps_Escale_Min" in df.columns else pd.DataFrame()
 
@@ -602,49 +605,52 @@ elif st.session_state["user_role"] == "agent":
     capacite_totale = int(guichets_ouverts * capacite_agent_heure)
 
     with c1:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">Passagers Attendus</div><div class="kpi-val">{total_passagers:,} pax</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Passagers Attendus", "Expected Passengers")}</div><div class="kpi-val">{total_passagers:,} pax</div></div>', unsafe_allow_html=True)
     with c2:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">Flux Transit</div><div class="kpi-val">{total_transit:,} pax</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Flux Transit", "Transit Flow")}</div><div class="kpi-val">{total_transit:,} pax</div></div>', unsafe_allow_html=True)
     with c3:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">Capacité Traitement</div><div class="kpi-val">{capacite_totale:,} pax/h</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Capacité Traitement", "Processing Capacity")}</div><div class="kpi-val">{capacite_totale:,} pax/h</div></div>', unsafe_allow_html=True)
     with c4:
         alert_style = "kpi-container-alert" if len(vols_critiques) > 0 else ""
         color_val = "#EF4444" if len(vols_critiques) > 0 else "#10B981"
-        st.markdown(f'<div class="kpi-container {alert_style}"><div class="kpi-label">Vols Critiques (≤45 min)</div><div class="kpi-val" style="color: {color_val};">{len(vols_critiques):,} Vol(s)</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container {alert_style}"><div class="kpi-label">{t("Vols Critiques (≤45 min)", "Critical Flights (≤45 min)")}</div><div class="kpi-val" style="color: {color_val};">{len(vols_critiques):,} {t("Vol(s)", "Flight(s)")}</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     col_left, col_right = st.columns(2)
 
     with col_left:
-        st.subheader("📊 Affluence Globale par Tranche Horaire")
+        st.subheader(t("📊 Affluence Globale par Tranche Horaire", "📊 Overall Traffic by Time Slot"))
         if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
             df_affluence_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
             fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template=plotly_template)
-            fig_affluence.update_layout(xaxis_title="Tranche Horaire", yaxis_title="Total Passagers", margin=dict(l=10, r=10, t=30, b=10))
+            fig_affluence.update_layout(xaxis_title=t("Tranche Horaire", "Time Slot"), yaxis_title=t("Total Passagers", "Total Passengers"), margin=dict(l=10, r=10, t=30, b=10))
             st.plotly_chart(fig_affluence, use_container_width=True)
 
     with col_right:
-        st.subheader("⏱️ Répartition des Temps d'Escale")
+        st.subheader(t("⏱️ Répartition des Temps d'Escale", "⏱️ Layover Time Distribution"))
         if "Temps_Escale_Min" in df.columns:
             bins = [0, 30, 45, 60, 90, 120, 999]
-            labels = ["< 30 min", "30-45 min (Critique)", "45-60 min", "60-90 min", "90-120 min", "> 120 min"]
+            labels_fr = ["< 30 min", "30-45 min (Critique)", "45-60 min", "60-90 min", "90-120 min", "> 120 min"]
+            labels_en = ["< 30 min", "30-45 min (Critical)", "45-60 min", "60-90 min", "90-120 min", "> 120 min"]
+            labels = labels_fr if langue_interface == "Français" else labels_en
+            
             df["Plage_Escale"] = pd.cut(df["Temps_Escale_Min"], bins=bins, labels=labels)
             df_escale_group = df["Plage_Escale"].value_counts().reset_index()
             df_escale_group.columns = ["Plage_Escale", "Nombre_de_Vols"]
 
             fig_transit = px.bar(df_escale_group, x="Plage_Escale", y="Nombre_de_Vols", color="Nombre_de_Vols", color_continuous_scale="Reds_r", text_auto=True, template=plotly_template)
-            fig_transit.update_layout(xaxis_title="Plage de Temps d'Escale", yaxis_title="Nombre de Vols", margin=dict(l=10, r=10, t=30, b=10))
+            fig_transit.update_layout(xaxis_title=t("Plage de Temps d'Escale", "Layover Time Range"), yaxis_title=t("Nombre de Vols", "Number of Flights"), margin=dict(l=10, r=10, t=30, b=10))
             st.plotly_chart(fig_transit, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("⚠️ Centre d'Alertes et Annonces")
+    st.subheader(t("⚠️ Centre d'Alertes et Annonces", "⚠️ Alerts & Announcements Center"))
 
     if len(vols_critiques) > 0:
         col_btn, col_info = st.columns([1, 2])
 
         with col_btn:
-            langue_choisie = st.radio("🌐 Langue de l'annonce vocale :", options=["Français", "English"], horizontal=True, key="choix_langue_audio")
+            langue_choisie = st.radio(t("🌐 Langue de l'annonce vocale :", "🌐 Voice announcement language:"), options=["Français", "English"], horizontal=True, key="choix_langue_audio")
             nb_crit = len(vols_critiques)
             total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
 
@@ -659,171 +665,93 @@ elif st.session_state["user_role"] == "agent":
                 tts.write_to_fp(fp)
                 fp.seek(0)
                 st.audio(fp.read(), format="audio/mp3")
-                st.info(f"Annonce disponible : « {message} »")
+                st.info(f"{t('Annonce disponible :', 'Announcement available:')} « {message} »")
             except Exception as e:
-                st.error(f"Erreur de génération vocale : {e}")
+                st.error(f"{t('Erreur de génération vocale :', 'Voice generation error:')} {e}")
 
         with col_info:
-            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ {len(vols_critiques):,} vol(s) critique(s) détecté(s) (Escale ≤ 45 min)</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
 
         with st.container(height=280):
             for _, vol in vols_critiques.iterrows():
-                st.error(f"🔴 **[Vol {vol.get('Vol', 'N/A')} - {vol.get('Compagnie', 'N/A')}]** : Arrivée à **{vol.get('Heure_Arrivee', 'N/A')}** | **{vol.get('Passagers_Transit', 0)} pax transit** | Escale: **{vol.get('Temps_Escale_Min', 0)} min**")
+                st.error(f"🔴 **[Vol {vol.get('Vol', 'N/A')} - {vol.get('Compagnie', 'N/A')}]** : {t('Arrivée à', 'Arrival at')} **{vol.get('Heure_Arrivee', 'N/A')}** | **{vol.get('Passagers_Transit', 0)} pax transit** | {t('Escale :', 'Layover:')} **{vol.get('Temps_Escale_Min', 0)} min**")
     else:
-        st.success("✅ Aucun risque de correspondance détecté pour le moment.")
+        st.success(t("✅ Aucun risque de correspondance détecté pour le moment.", "✅ No connection risk detected at the moment."))
 
-    with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
+    with st.expander(t("📄 Voir le programme détaillé des vols (AIGE)", "📄 View detailed flight schedule (AIGE)")):
         st.dataframe(df, height=400, hide_index=True)
 
     st.markdown("---")
-    st.subheader("📥 Exportation & Rapports d'Exploitation")
+    st.subheader(t("📥 Exportation & Rapports d'Exploitation", "📥 Export & Operational Reports"))
     exp_col1, exp_col2, exp_col3 = st.columns(3)
 
     with exp_col1:
-        st.markdown("**1. Données des Vols Critiques (CSV)**")
+        st.markdown(f"**1. {t('Données des Vols Critiques (CSV)', 'Critical Flights Data (CSV)')}**")
         if not vols_critiques.empty:
-            st.download_button(label="📄 Télécharger Vols Critiques (.csv)", data=vols_critiques.to_csv(index=False, encoding="utf-8-sig"), file_name=f"vols_critiques_AIGE_{datetime.date.today()}.csv", mime="text/csv")
+            st.download_button(label=t("📄 Télécharger Vols Critiques (.csv)", "📄 Download Critical Flights (.csv)"), data=vols_critiques.to_csv(index=False, encoding="utf-8-sig"), file_name=f"vols_critiques_AIGE_{datetime.date.today()}.csv", mime="text/csv")
         else:
-            st.info("Aucun vol critique à exporter.")
+            st.info(t("Aucun vol critique à exporter.", "No critical flights to export."))
 
     with exp_col2:
-        st.markdown("**2. Programme Complet des Vols (CSV)**")
-        st.download_button(label="📊 Télécharger Programme Complet (.csv)", data=df.to_csv(index=False, encoding="utf-8-sig"), file_name=f"programme_vols_AIGE_{datetime.date.today()}.csv", mime="text/csv")
+        st.markdown(f"**2. {t('Programme Complet des Vols (CSV)', 'Full Flight Schedule (CSV)')}**")
+        st.download_button(label=t("📊 Télécharger Programme Complet (.csv)", "📊 Download Full Schedule (.csv)"), data=df.to_csv(index=False, encoding="utf-8-sig"), file_name=f"programme_vols_AIGE_{datetime.date.today()}.csv", mime="text/csv")
 
     with exp_col3:
-        st.markdown("**3. Rapport Synthétique Officiel (PDF)**")
+        st.markdown(f"**3. {t('Rapport Synthétique Officiel (PDF)', 'Official Summary Report (PDF)')}**")
         if REPORTLAB_AVAILABLE:
-            st.download_button(label="📑 Télécharger le Rapport (.pdf)", data=generer_pdf_rapport(df, vols_critiques, total_passagers, total_transit, guichets_ouverts), file_name=f"Rapport_Exploitation_AIGE_{datetime.date.today()}.pdf", mime="application/pdf")
+            st.download_button(label=t("📑 Télécharger le Rapport (.pdf)", "📑 Download Report (.pdf)"), data=generer_pdf_rapport(df, vols_critiques, total_passagers, total_transit, guichets_ouverts), file_name=f"Rapport_Exploitation_AIGE_{datetime.date.today()}.pdf", mime="application/pdf")
         else:
-            st.warning("Module ReportLab indisponible pour l'export PDF.")
+            st.warning(t("⚠️ Module ReportLab non disponible pour l'export PDF.", "⚠️ ReportLab module not available for PDF export."))
 
+    # --------------------------------------------------------------------------
+    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ
+    # --------------------------------------------------------------------------
+    st.markdown("---")
+    st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Bilingue)", "💬 AeroFlow Virtual Assistant (Bilingual Chatbot)"))
+    st.markdown(t("Posez vos questions sur le trafic, les vols ou l'exploitation de l'AIGE (en français ou en anglais).", "Ask your questions about traffic, flights, or AIGE operations (in French or English)."))
 
-# ------------------------------------------------------------------------------
-# 7. MODULE CHATBOT AEROBOOT
-# ------------------------------------------------------------------------------
+    if "messages_chat" not in st.session_state:
+        st.session_state["messages_chat"] = [
+            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Comment puis-je vous aider aujourd'hui ?", "Hello! I am AeroFlow's intelligent assistant. How can I help you today?")}
+        ]
 
-st.markdown("---")
-st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
+    for message in st.session_state["messages_chat"]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-if "messages_chat" not in st.session_state:
-    st.session_state["messages_chat"] = [
-        {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation pour l'AIGE. Comment puis-je vous aider ? Si vous cherchez des infos sur votre vol, donnez-moi simplement votre compagnie ou votre destination !"}
-    ]
+    if prompt_utilisateur := st.chat_input(t("Tapez votre question ici...", "Type your question here...")):
+        st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
+        with st.chat_message("user"):
+            st.markdown(prompt_utilisateur)
 
-prompt_utilisateur = None
-mode_vocal = False
+        # Logique de réponse intelligente et bilingue du chatbot
+        p_lower = prompt_utilisateur.lower()
+        
+        # Détection simple de la langue de la question (ou utilisation de la langue de l'interface)
+        est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help"]) or langue_interface == "English"
 
-chat_container = st.container()
-
-with st.form(key="gemini_chat_form", clear_on_submit=True):
-    col_input, col_mic, col_send = st.columns([10, 1, 1])
-    
-    with col_input:
-        prompt_texte = st.text_input(
-            "", 
-            placeholder="Posez votre question à AeroBot (ex: Vol Asky, porte d'embarquement...)...", 
-            label_visibility="collapsed",
-            key="input_gemini_style"
-        )
-    
-    with col_mic:
-        if VOICE_INPUT_AVAILABLE:
-            audio_recorded = mic_recorder(
-                start_prompt="🎙️",
-                stop_prompt="⏹️",
-                key="mic_gemini_bar"
-            )
-            if audio_recorded and "bytes" in audio_recorded:
-                audio_bytes = audio_recorded["bytes"]
-                recognizer = sr.Recognizer()
-                try:
-                    audio_file = io.BytesIO(audio_bytes)
-                    with sr.AudioFile(audio_file) as source:
-                        audio_data = recognizer.record(source)
-                        prompt_utilisateur = recognizer.recognize_google(audio_data, language="fr-FR")
-                except Exception:
-                    try:
-                        audio_file.seek(0)
-                        with sr.AudioFile(audio_file) as source:
-                            audio_data = recognizer.record(source)
-                            prompt_utilisateur = recognizer.recognize_google(audio_data, language="en-US")
-                    except Exception:
-                        st.error("Rien n'a été entendu.")
-                
-                if prompt_utilisateur:
-                    mode_vocal = True
+        if any(w in p_lower for w in ["critique", "critical", "delay", "retard"]):
+            nb_c = len(vols_critiques)
+            if est_anglais:
+                reponse_bot = f"There are currently {nb_c} critical flight(s) with a layover of 45 minutes or less."
+            else:
+                reponse_bot = f"Il y a actuellement {nb_c} vol(s) critique(s) avec un temps d'escale inférieur ou égal à 45 minutes."
+        elif any(w in p_lower for w in ["passager", "pax", "passenger", "total"]):
+            if est_anglais:
+                reponse_bot = f"Expected passenger traffic today is {total_passagers:,} passengers, including {total_transit:,} in transit."
+            else:
+                reponse_bot = f"Le trafic passagers attendu aujourd'hui est de {total_passagers:,} passagers, dont {total_transit:,} en transit."
+        elif any(w in p_lower for w in ["guichet", "counter", "agent", "capacity"]):
+            if est_anglais:
+                reponse_bot = f"There are {guichets_ouverts} counters currently open on-site, with an estimated processing capacity of {capacite_agent_heure} pax/h/agent."
+            else:
+                reponse_bot = f"Il y a {guichets_ouverts} guichets ouverts sur le terrain, avec une capacité de traitement estimée à {capacite_agent_heure} pax/h/agent."
         else:
-            st.write("🎙️")
+            if est_anglais:
+                reponse_bot = "I am AeroFlow's assistant. You can ask me about passenger numbers, critical flights, or counter capacity at AIGE airport!"
+            else:
+                reponse_bot = "Je suis l'assistant d'AeroFlow. Vous pouvez m'interroger sur le nombre de passagers, les vols critiques ou la capacité des guichets à l'AIGE !"
 
-    with col_send:
-        submit_btn = st.form_submit_button("➔")
-
-    if submit_btn and prompt_texte:
-        prompt_utilisateur = prompt_texte
-        mode_vocal = False
-
-if prompt_utilisateur:
-    st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
-
-    q = prompt_utilisateur.lower().strip()
-    reponse = ""
-    lang_rep = "fr"
-
-    salutations_fr = [
-        "salut", "bonjour", "bonsoir", "coucou", "yo", "cc", "hello", "hi", "hey",
-        "ça va", "ca va", "comment vas", "comment tu vas", "tu vas bien", "vas bien",
-        "forme", "bien ?", "bien?", "sava", "sa va", "qui es tu", "qui es-tu",
-        "merci", "meci", "thx", "thanks", "super", "parfait", "cool", "au revoir", "bye"
-    ]
-    
-    salutations_en = [
-        "hello", "hi", "hey", "good morning", "good evening", "how are you", 
-        "how do you do", "whats up", "what's up", "how is it going", "thanks", "thank you"
-    ]
-
-    compagnies_connues = ["asky", "air france", "ethiopian", "turkish", "brussels", "ceiba", "overland", "air peace"]
-    compagnie_trouvee = next((comp for comp in compagnies_connues if comp in q), None)
-
-    est_salutation_fr = any(s in q for s in salutations_fr)
-    est_salutation_en = any(s in q for s in salutations_en)
-
-    if est_salutation_fr or est_salutation_en:
-        if est_salutation_en and not est_salutation_fr:
-            lang_rep = "en"
-            reponse = "Hello! I can help you with your flight status, boarding gates, or airline info. Could you please tell me your airline or destination?"
-        else:
-            lang_rep = "fr"
-            reponse = "Bonjour ! Je suis AeroBot. Pour vous aider au mieux sans votre numéro de vol, dites-moi simplement votre **compagnie aérienne** ou votre **destination** (ex: Asky, Air France...)."
-
-    elif compagnie_trouvee:
-        lang_rep = "fr"
-        reponse = f"✈️ Concernant la compagnie **{compagnie_trouvee.capitalize()}**, les comptoirs d'enregistrement principaux sont situés aux Guichets 01 à 04 et l'embarquement s'effectue généralement en Porte 02. Avez-vous besoin d'une information spécifique sur un horaire ?"
-
-    elif any(k in q for k in ["porte", "embarquement", "guichet", "enregistrement", "bagage", "tapis", "retard", "heure"]):
-        lang_rep = "fr"
-        reponse = "ℹ️ Pour vous guider précisément vers votre porte ou vos bagages, pourriez-vous m'indiquer votre **destination** ou votre **compagnie** ? (Par exemple : *« Vol Asky »* ou *« Je vais à Paris »*)."
-
-    else:
-        lang_rep = "fr"
-        reponse = (
-            "Je n'ai pas eu besoin de votre numéro de vol exact ! "
-            "Vous pouvez simplement m'indiquer votre **compagnie** ou votre **destination** "
-            "pour que je vous donne les informations sur votre porte, vos bagages ou vos horaires à l'AIGE."
-        )
-
-    st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
-
-    if mode_vocal and VOICE_INPUT_AVAILABLE:
-        try:
-            texte_audio = reponse.replace("*", "").replace("#", "")
-            tts_bot = gTTS(text=texte_audio, lang=lang_rep)
-            fp_bot = io.BytesIO()
-            tts_bot.write_to_fp(fp_bot)
-            fp_bot.seek(0)
-            st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
-        except Exception:
-            pass
-
-with chat_container:
-    for msg in st.session_state["messages_chat"]:
-        st.chat_message(msg["role"]).write(msg["content"])
+        st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
+        with st.chat_message("assistant"):
+            st.markdown(reponse_bot)
