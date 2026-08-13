@@ -63,16 +63,13 @@ AGENT_CREDENTIALS = {
 
 
 # ------------------------------------------------------------------------------
-# 2. SELECTION DU THÈME DANS LA SIDEBAR & CSS DYNAMIQUE (CONTRASTES CORRIGÉS)
+# 2. SELECTION DU THÈME & CSS DYNAMIQUE (ONGLETS & ALERTES CORRIGÉS)
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
-    
-    # Bouton bascule du Mode Nuit / Mode Clair
     mode_nuit = st.toggle("🌙 Mode Nuit (Sombre)", value=st.session_state["theme_sombre"])
     st.session_state["theme_sombre"] = mode_nuit
 
-# Injection CSS dynamique selon le mode choisi (Correction totale des contrastes)
 if st.session_state["theme_sombre"]:
     # THÈME SOMBRE
     bg_app = "#131314"
@@ -81,7 +78,6 @@ if st.session_state["theme_sombre"]:
     border_color = "#444746"
     title_color = "#FFFFFF"
     plotly_template = "plotly_dark"
-    radio_text_color = "#E3E3E3"
     
     input_box_bg = "#242731"
     input_text_color = "#FFFFFF"
@@ -90,15 +86,20 @@ if st.session_state["theme_sombre"]:
     chat_bg = "#2D2E30"
     chat_text = "#E3E3E3"
     avatar_bg = "#EF4444"
+    
+    # Couleurs d'alerte mode sombre
+    success_bg = "#064E3B"
+    success_text = "#ECFDF5"
+    warning_bg = "#78350F"
+    warning_text = "#FEF3C7"
 else:
-    # THÈME CLAIR (Textes forcés sombres pour une visibilité parfaite)
+    # THÈME CLAIR (Textes forcés sombres et contrastés)
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
     card_bg = "#FFFFFF"
     border_color = "#CBD5E1"
     title_color = "#0F172A"
     plotly_template = "plotly_white"
-    radio_text_color = "#0F172A"
     
     input_box_bg = "#FFFFFF"
     input_text_color = "#0F172A"
@@ -107,6 +108,12 @@ else:
     chat_bg = "#E2E8F0"
     chat_text = "#0F172A"
     avatar_bg = "#0284C7"
+    
+    # Couleurs d'alerte mode clair (bien lisibles)
+    success_bg = "#DCFCE7"
+    success_text = "#166534"
+    warning_bg = "#FEF9C3"
+    warning_text = "#854D0E"
 
 st.markdown(
     f"""
@@ -116,6 +123,23 @@ st.markdown(
     .header-title {{ font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: {title_color}; }}
     .header-subtitle {{ color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
     
+    /* --- CORRECTION VISIBILITÉ DES ONGLETS (TABS) --- */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
+        color: {text_main} !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }}
+    .stTabs [data-baseweb="tab-list"] button {{
+        background-color: {card_bg} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 8px 8px 0 0 !important;
+        margin-right: 4px;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        height: 50px;
+        white-space: pre-wrap;
+    }}
+
     /* KPI Containers */
     .kpi-container {{
         background-color: {card_bg}; border: 1px solid {border_color}; border-radius: 12px;
@@ -162,7 +186,7 @@ st.markdown(
         font-size: 1.05rem !important;
     }}
 
-    /* --- FORMULAIRES DE SAISIE PRINCIPAUX --- */
+    /* --- FORMULAIRES DE SAISIE --- */
     div[data-testid="stForm"] {{
         background-color: {card_bg} !important;
         border: 1px solid {border_color} !important;
@@ -359,7 +383,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
 
 
 # ==============================================================================
-# 4. GESTION DES ACCÈS / AUTHENTIFICATION (AVEC VISIBILITÉ DES MOTS DE PASSE)
+# 4. GESTION DES ACCÈS / AUTHENTIFICATION
 # ==============================================================================
 
 if st.session_state["user_role"] is None:
@@ -378,7 +402,6 @@ if st.session_state["user_role"] is None:
             horizontal=True
         )
 
-        # Option pour afficher ou cacher les mots de passe en clair
         afficher_mdp_pax = st.checkbox("👁️ Afficher les caractères en clair", key="chk_pax_visible")
         input_type_pax = "default" if afficher_mdp_pax else "password"
 
@@ -441,7 +464,7 @@ if st.session_state["user_role"] is None:
 
 
 # ==============================================================================
-# 5. VUE ESPACE PASSAGER (ACCÈS SPÉCIFIQUE)
+# 5. VUE ESPACE PASSAGER
 # ==============================================================================
 
 if st.session_state["user_role"] == "passager":
@@ -452,7 +475,9 @@ if st.session_state["user_role"] == "passager":
         st.rerun()
 
     st.markdown('<div class="header-title">✈️ Votre Espace Voyage — AIGE Lomé</div>', unsafe_allow_html=True)
-    st.success("Bienvenue ! Retrouvez ici les informations de vol et services utiles.")
+    
+    # Message d'accueil avec couleurs adaptées et contrastées
+    st.markdown(f'<div style="background-color: {success_bg}; color: {success_text}; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 20px;">Bienvenue ! Retrouvez ici les informations de vol et services utiles.</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -466,14 +491,11 @@ if st.session_state["user_role"] == "passager":
 
 
 # ==============================================================================
-# 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ (INTERFACE EXPLOITATION COMPLÈTE)
+# 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ
 # ==============================================================================
 
 elif st.session_state["user_role"] == "agent":
     
-    # --------------------------------------------------------------------------
-    # SIDEBAR : DECONNEXION + CHARGEMENT CSV + SLIDERS
-    # --------------------------------------------------------------------------
     with st.sidebar:
         st.markdown("---")
         st.write(f"🛡️ Agent : **{st.session_state['current_user']}**")
@@ -537,9 +559,6 @@ elif st.session_state["user_role"] == "agent":
         if guichets_ouverts < guichets_recommandes:
             st.warning(f"💡 **Recommandation :** Ouvrir au moins **{guichets_recommandes} guichets** pour absorber la pointe.")
 
-    # --------------------------------------------------------------------------
-    # DASHBOARD AGENT : KPIS
-    # --------------------------------------------------------------------------
     st.markdown('<div class="header-title">✈️ AeroFlow — Operations Control Center</div>', unsafe_allow_html=True)
     st.markdown('<div class="header-subtitle">Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & ANAC</div>', unsafe_allow_html=True)
 
@@ -563,9 +582,6 @@ elif st.session_state["user_role"] == "agent":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --------------------------------------------------------------------------
-    # DASHBOARD AGENT : GRAPHIQUES
-    # --------------------------------------------------------------------------
     col_left, col_right = st.columns(2)
 
     with col_left:
@@ -589,9 +605,6 @@ elif st.session_state["user_role"] == "agent":
             fig_transit.update_layout(xaxis_title="Plage de Temps d'Escale", yaxis_title="Nombre de Vols", margin=dict(l=10, r=10, t=30, b=10))
             st.plotly_chart(fig_transit, use_container_width=True)
 
-    # --------------------------------------------------------------------------
-    # DASHBOARD AGENT : CENTRE D'ALERTES ET AUDIO
-    # --------------------------------------------------------------------------
     st.markdown("---")
     st.subheader("⚠️ Centre d'Alertes et Annonces")
 
@@ -619,8 +632,8 @@ elif st.session_state["user_role"] == "agent":
                 st.error(f"Erreur de génération vocale : {e}")
 
         with col_info:
-            s = "s" if len(vols_critiques) > 1 else ""
-            st.markdown(f'<div style="background-color: #DC2626; color: #FFFFFF; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px;">⚠️ {len(vols_critiques):,} vol{s} critique{s} détecté{s} (Escale ≤ 45 min)</div>', unsafe_allow_html=True)
+            # Alerte jaune/avertissement avec contraste corrigé et lisible en mode clair
+            st.markdown(f'<div style="background-color: {warning_bg}; color: {warning_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EAB308;">⚠️ {len(vols_critiques):,} vol(s) critique(s) détecté(s) (Escale ≤ 45 min)</div>', unsafe_allow_html=True)
 
         with st.container(height=280):
             for _, vol in vols_critiques.iterrows():
@@ -628,9 +641,6 @@ elif st.session_state["user_role"] == "agent":
     else:
         st.success("✅ Aucun risque de correspondance détecté pour le moment.")
 
-    # --------------------------------------------------------------------------
-    # DASHBOARD AGENT : EXPORTATION & RAPPORTS
-    # --------------------------------------------------------------------------
     with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
         st.dataframe(df, height=400, hide_index=True)
 
@@ -658,7 +668,7 @@ elif st.session_state["user_role"] == "agent":
 
 
 # ==============================================================================
-# 7. MODULE CHATBOT AEROBOOT (DISPONIBLE POUR TOUS LES UTILISATEURS CONNECTÉS)
+# 7. MODULE CHATBOT AEROBOOT
 # ==============================================================================
 
 st.markdown("---")
@@ -672,10 +682,8 @@ if "messages_chat" not in st.session_state:
 prompt_utilisateur = None
 mode_vocal = False
 
-# Zone conteneur pour l'historique des messages (Haut)
 chat_container = st.container()
 
-# Formulaire de saisie (Bas)
 with st.form(key="gemini_chat_form", clear_on_submit=True):
     col_input, col_mic, col_send = st.columns([10, 1, 1])
     
@@ -723,7 +731,6 @@ with st.form(key="gemini_chat_form", clear_on_submit=True):
         prompt_utilisateur = prompt_texte
         mode_vocal = False
 
-# Traitement de la logique de réponse AeroBot
 if prompt_utilisateur:
     st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
 
@@ -777,8 +784,6 @@ if prompt_utilisateur:
 
     elif est_metier:
         is_english = any(w in q for w in ["flight", "critical", "counter", "agent", "passenger"])
-        
-        # Récupération sécurisée des métriques si l'agent est connecté
         nb_crit = len(st.session_state["df_vols"][st.session_state["df_vols"]["Temps_Escale_Min"] <= 45]) if "df_vols" in st.session_state and "Temps_Escale_Min" in st.session_state["df_vols"].columns else 0
         pax_tot = int(st.session_state["df_vols"]["Passagers"].sum()) if "df_vols" in st.session_state and "Passagers" in st.session_state["df_vols"].columns else 0
 
@@ -820,7 +825,6 @@ if prompt_utilisateur:
         except Exception:
             pass
 
-# Affichage des messages
 with chat_container:
     for msg in st.session_state["messages_chat"]:
         st.chat_message(msg["role"]).write(msg["content"])
