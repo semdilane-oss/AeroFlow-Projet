@@ -501,7 +501,7 @@ if st.session_state["user_role"] == "passager":
 
     if not st.session_state["messages_chat_pax"]:
         st.session_state["messages_chat_pax"] = [
-            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Je peux vous lister tous les vols disponibles, vous donner leurs heures exactes de départ et calculer en temps réel le temps exact qu'il reste avant le départ de votre vol. Que souhaitez-vous savoir ?", "Hello! I am AeroFlow's intelligent assistant. I can list all available flights, give you their exact departure times, and calculate in real-time the exact time remaining before your flight departs. What would you like to know?")}
+            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Je peux vous lister tous les vols disponibles, vous donner leurs heures exactes de départ et calculer en temps réel le temps exact qu'il reste avant le départ de votre vol. Que souhaitez-vous savoir?", "Hello! I am AeroFlow's intelligent assistant. I can list all available flights, give you their exact departure times, and calculate in real-time the exact time remaining before your flight departs. What would you like to know?")}
         ]
 
     for message in st.session_state["messages_chat_pax"]:
