@@ -638,7 +638,6 @@ if st.session_state["user_role"] == "passager":
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
         st.rerun()
 
-
 # ------------------------------------------------------------------------------
 # 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ
 # ------------------------------------------------------------------------------
