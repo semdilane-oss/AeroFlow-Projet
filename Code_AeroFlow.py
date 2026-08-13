@@ -97,7 +97,7 @@ st.markdown(
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'}; text-transform: uppercase; }}
     .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
-    /* Correctif Visibilité Boutons Radio (Langue de l'annonce) */
+    /* Correctif Visibilité Boutons Radio */
     div[data-testid="stRadio"] label, div[data-testid="stRadio"] p {{
         color: {radio_text_color} !important;
         font-weight: 600 !important;
@@ -117,39 +117,50 @@ st.markdown(
         font-size: 1rem !important;
     }}
 
-    /* Style du formulaire type Capsule Gemini */
+    /* --- FIX CAPSULE & ZONE DE SAISIE STREAMLIT --- */
+    
+    /* Formulaire Capsule Extérieur */
     div[data-testid="stForm"] {{
         background-color: {input_bg_color} !important;
         border: 1px solid {border_color} !important;
         border-radius: 28px !important;
-        padding: 6px 16px !important;
+        padding: 4px 16px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
     }}
     
-    /* Correctif visibilité de la saisie utilisateur (Mode Clair/Sombre) */
-    div[data-testid="stForm"] input, 
-    div[data-testid="stTextInput"] input,
-    div[data-baseweb="input"] input {{
+    /* Nettoyage du conteneur interne de Streamlit (suppression de la boîte noire/sombre) */
+    div[data-testid="stForm"] div[data-baseweb="input"],
+    div[data-testid="stForm"] div[data-baseweb="base-input"],
+    div[data-testid="stTextInput"] > div {{
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    
+    /* Texte Saisi (Couleur dynamique + Fond Transparent) */
+    div[data-testid="stForm"] input {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
         background-color: transparent !important;
+        font-size: 1rem !important;
+        font-weight: 500 !important;
         caret-color: {input_text_color} !important;
     }}
 
-    /* Style du Placeholder (Texte d'indication quand vide) */
-    div[data-testid="stForm"] input::placeholder, 
-    div[data-testid="stTextInput"] input::placeholder {{
+    /* Placeholder quand le champ est vide */
+    div[data-testid="stForm"] input::placeholder {{
         color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
         -webkit-text-fill-color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
         opacity: 1 !important;
     }}
 
-    /* Correctif du Bouton Micro et Envoi */
+    /* Boutons Micro et Envoi */
     div[data-testid="stForm"] button {{
         background: transparent !important;
         border: none !important;
         color: {title_color} !important;
         font-size: 1.2rem !important;
+        box-shadow: none !important;
     }}
 </style>
 """,
