@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - DESIGN DYNAMIQUE & SÉPARATION DES RÔLES
+# APPLICATION WEB STREAMLIT - DESIGN DYNAMIQUE, RÔLES & ACCESSIBILITÉ
 # ==============================================================================
 
 import glob
@@ -63,7 +63,7 @@ AGENT_CREDENTIALS = {
 
 
 # ------------------------------------------------------------------------------
-# 2. SELECTION DU THÈME DANS LA SIDEBAR & CSS DYNAMIQUE
+# 2. SELECTION DU THÈME DANS LA SIDEBAR & CSS DYNAMIQUE (CONTRASTES CORRIGÉS)
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -72,7 +72,7 @@ with st.sidebar:
     mode_nuit = st.toggle("🌙 Mode Nuit (Sombre)", value=st.session_state["theme_sombre"])
     st.session_state["theme_sombre"] = mode_nuit
 
-# Injection CSS dynamique selon le mode choisi
+# Injection CSS dynamique selon le mode choisi (Correction totale des contrastes)
 if st.session_state["theme_sombre"]:
     # THÈME SOMBRE
     bg_app = "#131314"
@@ -91,7 +91,7 @@ if st.session_state["theme_sombre"]:
     chat_text = "#E3E3E3"
     avatar_bg = "#EF4444"
 else:
-    # THÈME CLAIR
+    # THÈME CLAIR (Textes forcés sombres pour une visibilité parfaite)
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
     card_bg = "#FFFFFF"
@@ -100,13 +100,13 @@ else:
     plotly_template = "plotly_white"
     radio_text_color = "#0F172A"
     
-    input_box_bg = "#1E293B"
-    input_text_color = "#FFFFFF"
-    placeholder_color = "#94A3B8"
+    input_box_bg = "#FFFFFF"
+    input_text_color = "#0F172A"
+    placeholder_color = "#64748B"
     
-    chat_bg = "#9399A0"
+    chat_bg = "#E2E8F0"
     chat_text = "#0F172A"
-    avatar_bg = "#FF2A2A"
+    avatar_bg = "#0284C7"
 
 st.markdown(
     f"""
@@ -125,9 +125,10 @@ st.markdown(
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'}; text-transform: uppercase; }}
     .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
-    /* Visibilité Boutons Radio */
-    div[data-testid="stRadio"] label, div[data-testid="stRadio"] p {{
-        color: {radio_text_color} !important;
+    /* Visibilité Boutons Radio et Labels */
+    div[data-testid="stRadio"] label, div[data-testid="stRadio"] p,
+    .stTextInput label, .stSelectbox label, .stCheckbox label {{
+        color: {text_main} !important;
         font-weight: 600 !important;
     }}
     
@@ -161,45 +162,26 @@ st.markdown(
         font-size: 1.05rem !important;
     }}
 
-    /* --- CAPSULE PILULE FORMULAIRE DE SAISIE --- */
+    /* --- FORMULAIRES DE SAISIE PRINCIPAUX --- */
     div[data-testid="stForm"] {{
-        background-color: #FFFFFF !important;
+        background-color: {card_bg} !important;
         border: 1px solid {border_color} !important;
-        border-radius: 50px !important;
-        padding: 4px 16px !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
-    }}
-    
-    div[data-testid="stForm"] div[data-baseweb="input"],
-    div[data-testid="stForm"] div[data-baseweb="base-input"] {{
-        background-color: {input_box_bg} !important;
-        border-radius: 8px !important;
-        border: none !important;
-        padding: 2px 8px !important;
+        border-radius: 16px !important;
+        padding: 20px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     }}
     
     div[data-testid="stForm"] input {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
-        background-color: transparent !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.5px !important;
+        background-color: {input_box_bg} !important;
+        font-weight: 600 !important;
     }}
 
     div[data-testid="stForm"] input::placeholder {{
         color: {placeholder_color} !important;
         -webkit-text-fill-color: {placeholder_color} !important;
         opacity: 1 !important;
-        font-weight: 500 !important;
-    }}
-
-    div[data-testid="stForm"] button {{
-        background: transparent !important;
-        border: none !important;
-        color: #0F172A !important;
-        font-size: 1.3rem !important;
-        box-shadow: none !important;
     }}
 </style>
 """,
@@ -377,7 +359,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
 
 
 # ==============================================================================
-# 4. GESTION DES ACCÈS / AUTHENTIFICATION (SI NON CONNECTÉ)
+# 4. GESTION DES ACCÈS / AUTHENTIFICATION (AVEC VISIBILITÉ DES MOTS DE PASSE)
 # ==============================================================================
 
 if st.session_state["user_role"] is None:
@@ -396,12 +378,16 @@ if st.session_state["user_role"] is None:
             horizontal=True
         )
 
+        # Option pour afficher ou cacher les mots de passe en clair
+        afficher_mdp_pax = st.checkbox("👁️ Afficher les caractères en clair", key="chk_pax_visible")
+        input_type_pax = "default" if afficher_mdp_pax else "password"
+
         if mode_passager == "Première connexion (Activer mon compte)":
             st.info("💡 Indiquez votre numéro de vol ou email, puis définissez un mot de passe.")
             with st.form("form_inscription_pax"):
                 pax_id = st.text_input("Numéro de Vol ou Email", placeholder="ex: KP010 ou passager@gmail.com")
-                pax_pass1 = st.text_input("Créer un mot de passe", type="password")
-                pax_pass2 = st.text_input("Confirmer le mot de passe", type="password")
+                pax_pass1 = st.text_input("Créer un mot de passe", type=input_type_pax)
+                pax_pass2 = st.text_input("Confirmer le mot de passe", type=input_type_pax)
                 btn_creer = st.form_submit_button("Activer mon espace voyageur")
 
                 if btn_creer:
@@ -419,7 +405,7 @@ if st.session_state["user_role"] is None:
         else:
             with st.form("form_login_pax"):
                 pax_id = st.text_input("Numéro de Vol ou Email")
-                pax_pass = st.text_input("Mot de passe", type="password")
+                pax_pass = st.text_input("Mot de passe", type=input_type_pax)
                 btn_login_pax = st.form_submit_button("Se connecter")
 
                 if btn_login_pax:
@@ -435,9 +421,12 @@ if st.session_state["user_role"] is None:
         st.subheader("Accès Sécurisé — Régulation & PC Sécurité")
         st.warning("⚠️ Zone protégée. Authentification requise pour l'ANAC et l'Exploitation.")
 
+        afficher_mdp_agent = st.checkbox("👁️ Afficher les caractères en clair", key="chk_agent_visible")
+        input_type_agent = "default" if afficher_mdp_agent else "password"
+
         with st.form("form_login_agent"):
             agent_user = st.text_input("Identifiant Agent")
-            agent_pass = st.text_input("Mot de passe", type="password")
+            agent_pass = st.text_input("Mot de passe", type=input_type_agent)
             btn_login_agent = st.form_submit_button("Connexion d'exploitation")
 
             if btn_login_agent:
