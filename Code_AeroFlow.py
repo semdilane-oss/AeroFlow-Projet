@@ -49,6 +49,9 @@ if "db_passagers" not in st.session_state:
 if "messages_chat_pax" not in st.session_state:
     st.session_state["messages_chat_pax"] = []
 
+if "messages_chat" not in st.session_state:
+    st.session_state["messages_chat"] = []
+
 # Identifiants STRICTS des agents ANAC / PC Sécurité (Mots de passe >= 6 caractères)
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
@@ -565,16 +568,22 @@ if st.session_state["user_role"] == "passager":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Bouton de Dictée Vocale
-    langue_stt = "fr-FR" if langue_interface == "Français" else "en-US"
-    texte_vocal_pax = speech_to_text(
-        start_prompt=t("🎤 Cliquer pour parler", "🎤 Click to speak"),
-        stop_prompt=t("⏹️ Arrêter l'enregistrement", "⏹️ Stop recording"),
-        language=langue_stt,
-        key="mic_pax"
-    )
+    # Disposition intégrée (Zone de texte + Bouton micro côte à côte)
+    col_input_pax, col_mic_pax = st.columns([12, 1])
+    
+    with col_mic_pax:
+        langue_stt = "fr-FR" if langue_interface == "Français" else "en-US"
+        texte_vocal_pax = speech_to_text(
+            start_prompt="🎙️",
+            stop_prompt="⏹️",
+            language=langue_stt,
+            key="mic_pax_inline"
+        )
 
-    prompt_pax = texte_vocal_pax if texte_vocal_pax else st.chat_input(t("Posez votre question ici...", "Type your question here..."))
+    with col_input_pax:
+        prompt_saisi_pax = st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
+
+    prompt_pax = texte_vocal_pax if texte_vocal_pax else prompt_saisi_pax
 
     if prompt_pax:
         st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
@@ -777,13 +786,13 @@ elif st.session_state["user_role"] == "agent":
             st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
 
     # --------------------------------------------------------------------------
-    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AVEC VOCAL)
+    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AVEC MICRO CÔTE À CÔTE)
     # --------------------------------------------------------------------------
     st.markdown("---")
     st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Bilingue)", "💬 AeroFlow Virtual Assistant (Bilingual Chatbot)"))
     st.markdown(t("Posez vos questions sur le trafic, les vols ou l'exploitation de l'AIGE (par écrit ou en parlant avec votre voix).", "Ask your questions about traffic, flights, or AIGE operations (by text or speaking with your voice)."))
 
-    if "messages_chat" not in st.session_state:
+    if not st.session_state["messages_chat"]:
         st.session_state["messages_chat"] = [
             {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Comment puis-je vous aider aujourd'hui ?", "Hello! I am AeroFlow's intelligent assistant. How can I help you today?")}
         ]
@@ -792,16 +801,22 @@ elif st.session_state["user_role"] == "agent":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Dictée vocale pour l'agent
-    langue_stt_agent = "fr-FR" if langue_interface == "Français" else "en-US"
-    texte_vocal_agent = speech_to_text(
-        start_prompt=t("🎤 Cliquer pour parler", "🎤 Click to speak"),
-        stop_prompt=t("⏹️ Arrêter l'enregistrement", "⏹️ Stop recording"),
-        language=langue_stt_agent,
-        key="mic_agent"
-    )
+    # Disposition intégrée (Zone de texte + Bouton micro côte à côte pour l'agent)
+    col_input_agent, col_mic_agent = st.columns([12, 1])
 
-    prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
+    with col_mic_agent:
+        langue_stt_agent = "fr-FR" if langue_interface == "Français" else "en-US"
+        texte_vocal_agent = speech_to_text(
+            start_prompt="🎙️",
+            stop_prompt="⏹️",
+            language=langue_stt_agent,
+            key="mic_agent_inline"
+        )
+
+    with col_input_agent:
+        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
+
+    prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else prompt_saisi_agent
 
     if prompt_utilisateur:
         st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
