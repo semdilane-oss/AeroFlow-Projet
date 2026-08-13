@@ -2,4 +2,4 @@ streamlit
 pandas
 plotly
 gTTS
-pip install reportlab
+reportlab
