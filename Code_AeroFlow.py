@@ -52,6 +52,15 @@ if "messages_chat_pax" not in st.session_state:
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = []
 
+# FIX (anti double-réponse) : mémorise le dernier texte vocal déjà traité,
+# pour chaque chatbot (passager / agent), afin de ne jamais le retraiter
+# lors d'un rerun déclenché par autre chose (ex: saisie clavier).
+if "last_voice_input_pax" not in st.session_state:
+    st.session_state["last_voice_input_pax"] = ""
+
+if "last_voice_input_agent" not in st.session_state:
+    st.session_state["last_voice_input_agent"] = ""
+
 # Identifiants STRICTS des agents ANAC / PC Sécurité
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
@@ -163,6 +172,10 @@ st.markdown(
     }}
     div[data-testid="stChatInput"] {{
         background-color: {input_box_bg} !important; border: 1px solid #0284C7 !important; border-radius: 12px !important;
+    }}
+    /* FIX (indicateur micro) : légende d'aide sous le bouton micro */
+    .mic-hint {{
+        font-size: 0.72rem; color: {placeholder_color}; text-align: center; margin-top: 2px;
     }}
 </style>
 """,
@@ -321,6 +334,55 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
     doc.build(story)
     buffer.seek(0)
     return buffer.getvalue()
+
+
+def repondre_ia_generique(question, contexte_df, langue):
+    """
+    FIX (chatbot très intelligent) : filet de secours pour TOUTE question
+    qui ne correspond à aucun scénario prédéfini (guichets, vols, temps
+    restant, porte, bagages...). Utilise l'API Claude si une clé est
+    configurée dans st.secrets["ANTHROPIC_API_KEY"], sinon retombe sur un
+    message d'aide clair (au lieu d'un message générique peu utile).
+
+    Pour activer ce mode "réponds à tout" :
+      1) pip install anthropic
+      2) créer .streamlit/secrets.toml avec : ANTHROPIC_API_KEY = "sk-ant-..."
+    """
+    try:
+        import anthropic
+        api_key = st.secrets.get("ANTHROPIC_API_KEY", None)
+        if not api_key:
+            raise RuntimeError("Pas de clé API configurée")
+
+        client = anthropic.Anthropic(api_key=api_key)
+        resume_vols = contexte_df.to_csv(index=False) if not contexte_df.empty else "Aucun vol chargé pour le moment."
+
+        systeme = (
+            "Tu es l'assistant virtuel officiel de l'aéroport AIGE (application AeroFlow). "
+            "Réponds toujours de façon brève (5 phrases max), claire, professionnelle et rassurante, "
+            "dans la même langue que la question. Si la réponse dépend des données de vols ci-dessous, "
+            "utilise-les. Si l'information n'existe pas dans les données, dis-le honnêtement et propose "
+            "de contacter un agent AIGE.\n\nDonnées de vols disponibles (CSV) :\n" + resume_vols
+        )
+
+        msg = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=400,
+            system=systeme,
+            messages=[{"role": "user", "content": question}],
+        )
+        return msg.content[0].text
+
+    except Exception:
+        return (
+            "Je n'ai pas d'information précise sur ce point. Vous pouvez me demander : "
+            "la liste des vols, le temps restant avant un départ, la porte d'embarquement, "
+            "les bagages, le wifi, le parking, la restauration ou l'assistance PMR."
+            if langue == "Français" else
+            "I don't have precise information on that. You can ask me about: the flight list, "
+            "remaining time before departure, boarding gate, baggage, wifi, parking, food options, "
+            "or special assistance."
+        )
 
 
 # Chargement par défaut des données CSV si disponibles dans le dossier pour alimenter les deux espaces
@@ -512,17 +574,31 @@ if st.session_state["user_role"] == "passager":
     
     with col_mic_pax:
         langue_stt = "fr-FR" if langue_interface == "Français" else "en-US"
+        # FIX (indicateur + anti-doublon) : just_once=True force le composant à ne
+        # renvoyer le texte transcrit qu'UNE seule fois, puis à se réinitialiser.
         texte_vocal_pax = speech_to_text(
             start_prompt="🎙️",
-            stop_prompt="⏹️",
+            stop_prompt="⏹️ ...",
             language=langue_stt,
+            just_once=True,
+            use_container_width=True,
             key="mic_pax_inline"
         )
+        st.markdown(f'<div class="mic-hint">{t("🔴 = écoute en cours", "🔴 = listening")}</div>', unsafe_allow_html=True)
 
     with col_input_pax:
         prompt_saisi_pax = st.chat_input(t("Ex: Liste des vols, heure de départ KP010, combien de temps reste-t-il...", "E.g. List flights, departure time KP010, how much time is left..."), key="chat_input_pax")
 
-    prompt_pax = texte_vocal_pax if texte_vocal_pax else prompt_saisi_pax
+    # FIX (anti double-réponse) : on ne traite le texte vocal QUE s'il est différent
+    # du dernier déjà traité. Combiné à just_once=True ci-dessus, ceci élimine
+    # totalement le bug de la question posée deux fois de suite.
+    prompt_pax = None
+    if texte_vocal_pax and texte_vocal_pax != st.session_state["last_voice_input_pax"]:
+        st.session_state["last_voice_input_pax"] = texte_vocal_pax
+        prompt_pax = texte_vocal_pax
+        st.toast(t("🎙️ Message vocal bien reçu !", "🎙️ Voice message received!"), icon="🎙️")
+    elif prompt_saisi_pax:
+        prompt_pax = prompt_saisi_pax
 
     if prompt_pax:
         st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
@@ -628,12 +704,26 @@ if st.session_state["user_role"] == "passager":
             rep_pax = "Votre vol embarque depuis la **Porte 02**. Présentez-vous en zone d'embarquement 30 minutes avant le départ." if not est_ang_pax else "Your flight is boarding from **Gate 02**. Please arrive at the boarding area 30 minutes before departure."
         elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt", "valise"]):
             rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1** dans le hall des arrivées de l'AIGE." if not est_ang_pax else "Your baggage claim is at **Belt 1** in the AIGE arrival hall."
+        # FIX (chatbot élargi) : nouveaux sujets fréquents en aéroport
+        elif any(w in p_low for w in ["wifi", "internet", "connexion"]):
+            rep_pax = "Le WiFi gratuit **AIGE_FreeWifi** est disponible dans tout le terminal, sans mot de passe." if not est_ang_pax else "Free WiFi **AIGE_FreeWifi** is available throughout the terminal, no password needed."
+        elif any(w in p_low for w in ["parking", "stationnement", "voiture"]):
+            rep_pax = "Le parking visiteurs se trouve juste devant le terminal principal, avec un tarif horaire affiché à l'entrée." if not est_ang_pax else "Visitor parking is located right in front of the main terminal, with hourly rates posted at the entrance."
+        elif any(w in p_low for w in ["restaurant", "manger", "boire", "food", "eat", "drink", "cafe"]):
+            rep_pax = "Plusieurs restaurants et cafés sont disponibles après le contrôle de sécurité, au niveau des salles d'embarquement." if not est_ang_pax else "Several restaurants and cafés are available past security, near the boarding gates."
+        elif any(w in p_low for w in ["douane", "visa", "immigration", "passeport", "customs", "passport"]):
+            rep_pax = "Les services de douane et d'immigration se trouvent au rez-de-chaussée, près du hall des arrivées." if not est_ang_pax else "Customs and immigration services are located on the ground floor, near the arrivals hall."
+        elif any(w in p_low for w in ["pmr", "handicap", "assistance", "fauteuil", "wheelchair", "disab"]):
+            rep_pax = "Une assistance PMR (personne à mobilité réduite) est disponible sur demande auprès de tout agent au comptoir d'enregistrement." if not est_ang_pax else "Special assistance for reduced-mobility passengers is available on request at any check-in counter."
+        elif any(w in p_low for w in ["taxi", "transport", "bus", "navette", "shuttle"]):
+            rep_pax = "Des taxis officiels stationnent en permanence à la sortie du terminal." if not est_ang_pax else "Official taxis are always available right outside the terminal exit."
         elif any(w in p_low for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey"]):
             rep_pax = "Bonjour et bienvenue à l'Aéroport International Gnassingbé Eyadéma (AIGE) ! Je suis prêt à vous donner toutes les informations sur les vols, les heures de départ et le temps restant en direct." if not est_ang_pax else "Hello and welcome to Gnassingbé Eyadéma International Airport (AIGE)! I am ready to provide all flight info, departure times, and live remaining time."
         elif any(w in p_low for w in ["merci", "thank"]):
             rep_pax = "Je vous en prie ! Bon voyage avec AeroFlow." if not est_ang_pax else "You're very welcome! Have a great trip with AeroFlow."
         else:
-            rep_pax = "Je suis l'assistant voyageur d'AeroFlow. Vous pouvez me demander :\n1. **« Liste tous les vols »** pour voir tous les départs.\n2. **« Temps restant pour le vol [Numéro] »** pour connaître l'heure exacte de départ et le décompte en direct.\n3. **« Porte d'embarquement »** ou **« Bagages »**." if not est_ang_pax else "I am AeroFlow's traveler assistant. You can ask me to list all flights, check departure times and live countdowns, or ask about gates and baggage."
+            # FIX : au lieu d'un message figé, on tente une réponse IA générique (voir fonction plus haut)
+            rep_pax = repondre_ia_generique(prompt_pax, df_pax_vols, langue_interface)
 
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
         st.rerun()
@@ -828,17 +918,29 @@ elif st.session_state["user_role"] == "agent":
 
     with col_mic_agent:
         langue_stt_agent = "fr-FR" if langue_interface == "Français" else "en-US"
+        # FIX (identique à l'espace passager) : just_once=True évite que le composant
+        # ne renvoie le même texte à chaque rerun.
         texte_vocal_agent = speech_to_text(
             start_prompt="🎙️",
-            stop_prompt="⏹️",
+            stop_prompt="⏹️ ...",
             language=langue_stt_agent,
+            just_once=True,
+            use_container_width=True,
             key="mic_agent_inline"
         )
+        st.markdown(f'<div class="mic-hint">{t("🔴 = écoute en cours", "🔴 = listening")}</div>', unsafe_allow_html=True)
 
     with col_input_agent:
         prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_agent")
 
-    prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else prompt_saisi_agent
+    # FIX (anti double-réponse) : même logique de déduplication que côté passager.
+    prompt_utilisateur = None
+    if texte_vocal_agent and texte_vocal_agent != st.session_state["last_voice_input_agent"]:
+        st.session_state["last_voice_input_agent"] = texte_vocal_agent
+        prompt_utilisateur = texte_vocal_agent
+        st.toast(t("🎙️ Message vocal bien reçu !", "🎙️ Voice message received!"), icon="🎙️")
+    elif prompt_saisi_agent:
+        prompt_utilisateur = prompt_saisi_agent
 
     if prompt_utilisateur:
         st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
@@ -905,7 +1007,8 @@ elif st.session_state["user_role"] == "agent":
             nb_c = len(vols_critiques)
             reponse_bot = f"🚨 **Protocoles d'Urgence ({nb_c} vol(s) critique(s)) :**\n1. Ouvrir au minimum **{guichets_recommandes} guichets**.\n2. Dépêcher une équipe mobile pour escorter les passagers.\n3. Prioriser les conteneurs de bagages en soute (Tapis 1)."
         else:
-            reponse_bot = "Je suis l'assistant expert d'AeroFlow. Demandez-moi la liste des vols, le nombre de guichets à ouvrir ou le temps restant avant le départ."
+            # FIX : fallback IA générique au lieu du message figé, pour couvrir "toutes" les questions
+            reponse_bot = repondre_ia_generique(prompt_utilisateur, df, langue_interface)
 
         st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
         st.rerun()
