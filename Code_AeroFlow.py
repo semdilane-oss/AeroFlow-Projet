@@ -88,7 +88,13 @@ if st.session_state["theme_sombre"]:
     success_text = "#ECFDF5"
     alert_bg = "#2D1517"
     alert_text = "#FCA5A5"
+    
+    # Bouton principal en vert
     btn_bg_gradient = "linear-gradient(135deg, #059669 0%, #047857 100%)"
+    # Bannière d'avertissement haut de page avec couleur d'avant (rouge d'origine)
+    banner_bg = "#2D1517"
+    banner_border = "#EF4444"
+    banner_text = "#FCA5A5"
 else:
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
@@ -109,7 +115,13 @@ else:
     success_text = "#166534"
     alert_bg = "#F0FDF4"
     alert_text = "#166534"
+    
+    # Bouton principal en vert
     btn_bg_gradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+    # Bannière d'avertissement haut de page avec couleur d'avant (rouge d'origine #FEE2E2 / bordure #EF4444 / texte #991B1B)
+    banner_bg = "#FEE2E2"
+    banner_border = "#EF4444"
+    banner_text = "#991B1B"
 
 st.markdown(
     f"""
@@ -454,7 +466,7 @@ if st.session_state["user_role"] is None:
 
     with tab_agent:
         st.subheader(t("Portail Opérationnel — Aérodrome International Gnassingbé Eyadéma", "Operational Portal — Gnassingbé Eyadéma International Aerodrome"))
-        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #10B981;">🛡️ {t("Accès réservé au personnel accrédité de la plateforme AIGE. Connexion sécurisée sous haute surveillance.", "Access restricted to accredited AIGE platform personnel. Secure connection under strict surveillance.")}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background-color: {banner_bg}; color: {banner_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid {banner_border};">⚠️ {t("Zone protégée réservée aux agents habilités de l\'ANAC. Les identifiants sont strictement contrôlés.", "Protected area reserved for authorized ANAC agents. Credentials are strictly controlled.")}</div>', unsafe_allow_html=True)
 
         afficher_mdp_agent = st.checkbox(t("👁️ Afficher les caractères en clair", "👁️ Show plain text characters"), key="chk_agent_visible")
         input_type_agent = "default" if afficher_mdp_agent else "password"
@@ -465,7 +477,7 @@ if st.session_state["user_role"] is None:
             with st.form("form_login_agent"):
                 agent_user = st.text_input(t("Identifiant Agent officiel (ex: admin_anac)", "Official Agent ID (e.g. admin_anac)"))
                 agent_pass = st.text_input(t("Mot de passe", "Password"), type=input_type_agent)
-                btn_login_agent = st.form_submit_button(t("Connexion d'exploitation", "Operational Sign In"))
+                btn_login_agent = st.form_submit_button(t("Se connecter", "Sign In"))
 
                 if btn_login_agent:
                     if agent_user in AGENT_CREDENTIALS and AGENT_CREDENTIALS[agent_user] == agent_pass:
