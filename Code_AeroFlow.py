@@ -145,7 +145,7 @@ st.markdown(
 
     .kpi-container {{
         background-color: {card_bg}; border: 1px solid {border_color}; border-radius: 12px;
-        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #10B981;
+        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
     }}
     .kpi-container-alert {{ border-top: 4px solid #EF4444 !important; background-color: {alert_bg}; }}
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#475569'}; text-transform: uppercase; }}
@@ -324,7 +324,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
         'DocTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor('#0F172A'), spaceAfter=6
     )
     subtitle_style = ParagraphStyle(
-        'DocSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#10B981'), spaceAfter=15
+        'DocSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#0284C7'), spaceAfter=15
     )
     normal_bold = ParagraphStyle(
         'NormalBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, textColor=colors.HexColor('#0F172A')
@@ -342,7 +342,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
     ]
     t_kpi = Table(kpi_data, colWidths=[130, 130, 130, 130])
     t_kpi.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#10B981')),
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0284C7')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -525,7 +525,7 @@ if st.session_state["user_role"] == "passager":
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Statut du Vol", "Flight Status")}</div><div class="kpi-val" style="color: #10B981;">{t("À l\'heure 🟢", "On Time 🟢")}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Statut du Vol", "Flight Status")}</div><div class="kpi-val" style="color: #0284C7;">{t("À l\'heure 🟢", "On Time 🟢")}</div></div>', unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Porte d\'Embarquement", "Boarding Gate")}</div><div class="kpi-val">{t("Porte 02", "Gate 02")}</div></div>', unsafe_allow_html=True)
     with c2:
@@ -656,7 +656,7 @@ elif st.session_state["user_role"] == "agent":
         st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Capacité Traitement", "Processing Capacity")}</div><div class="kpi-val">{capacite_totale:,} pax/h</div></div>', unsafe_allow_html=True)
     with c4:
         alert_style = "kpi-container-alert" if len(vols_critiques) > 0 else ""
-        color_val = "#EF4444" if len(vols_critiques) > 0 else "#10B981"
+        color_val = "#EF4444" if len(vols_critiques) > 0 else "#0284C7"
         st.markdown(f'<div class="kpi-container {alert_style}"><div class="kpi-label">{t("Vols Critiques (≤45 min)", "Critical Flights (≤45 min)")}</div><div class="kpi-val" style="color: {color_val};">{len(vols_critiques):,} {t("Vol(s)", "Flight(s)")}</div></div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -667,7 +667,7 @@ elif st.session_state["user_role"] == "agent":
         st.subheader(t("📊 Affluence Globale par Tranche Horaire", "📊 Overall Traffic by Time Slot"))
         if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
             df_affluence_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
-            fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Greens", template=plotly_template)
+            fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template=plotly_template)
             fig_affluence.update_layout(xaxis_title=t("Tranche Horaire", "Time Slot"), yaxis_title=t("Total Passagers", "Total Passengers"), margin=dict(l=10, r=10, t=30, b=10))
             st.plotly_chart(fig_affluence, use_container_width=True)
 
@@ -714,7 +714,7 @@ elif st.session_state["user_role"] == "agent":
                 st.error(f"{t('Erreur de génération vocale :', 'Voice generation error:')} {e}")
 
         with col_info:
-            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #10B981;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #0284C7;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
 
         with st.container(height=280):
             for _, vol in vols_critiques.iterrows():
