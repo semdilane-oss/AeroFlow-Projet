@@ -129,7 +129,7 @@ st.markdown(
     .stApp {{ background-color: {bg_app} !important; color: {text_main} !important; }}
     
     .header-title {{ font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: {title_color}; }}
-    .header-subtitle {{ color: #10B981; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
+    .header-subtitle {{ color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
     
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
         color: {text_main} !important;
@@ -707,7 +707,7 @@ elif st.session_state["user_role"] == "agent":
         if REPORTLAB_AVAILABLE:
             st.download_button(label=t("📑 Télécharger le Rapport (.pdf)", "📑 Download Report (.pdf)"), data=generer_pdf_rapport(df, vols_critiques, total_passagers, total_transit, guichets_ouverts), file_name=f"Rapport_Exploitation_AIGE_{datetime.date.today()}.pdf", mime="application/pdf")
         else:
-            st.warning(t("⚠️ Module ReportLab non disponible pour l'export PDF.", "⚠️ ReportLab module not available for PDF export."))
+            st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
 
     # --------------------------------------------------------------------------
     # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ
