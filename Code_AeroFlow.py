@@ -45,6 +45,9 @@ if "current_user" not in st.session_state:
 if "db_passagers" not in st.session_state:
     st.session_state["db_passagers"] = {}
 
+if "messages_chat_pax" not in st.session_state:
+    st.session_state["messages_chat_pax"] = []
+
 # Identifiants STRICTS des agents ANAC / PC Sécurité (Mots de passe >= 6 caractères)
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
@@ -418,7 +421,7 @@ if st.session_state["user_role"] is None:
                 pax_id = st.text_input(t("Numéro de Vol ou Email", "Flight Number or Email"), placeholder="ex: KP010 ou passager@gmail.com")
                 pax_pass1 = st.text_input(t("Créer un mot de passe (min. 6 caractères)", "Create a password (min. 6 chars)"), type=input_type_pax)
                 pax_pass2 = st.text_input(t("Confirmer le mot de passe", "Confirm password"), type=input_type_pax)
-                btn_creer = st.form_submit_button(t("Activer mon espace voyageur", "Activate my traveler space"))
+                btn_creer = st.form_submit_button(t("Se connecter", "Sign In"))
 
                 if btn_creer:
                     if not pax_id or not pax_pass1:
@@ -522,13 +525,48 @@ if st.session_state["user_role"] == "passager":
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Statut du Vol", "Flight Status")}</div><div class="kpi-val" style="color: #10B981;">{t("À l\\'heure 🟢", "On Time 🟢")}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Statut du Vol", "Flight Status")}</div><div class="kpi-val" style="color: #10B981;">{t("À l\'heure 🟢", "On Time 🟢")}</div></div>', unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Porte d\'Embarquement", "Boarding Gate")}</div><div class="kpi-val">{t("Porte 02", "Gate 02")}</div></div>', unsafe_allow_html=True)
     with c2:
         st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Zone d\'Enregistrement", "Check-in Zone")}</div><div class="kpi-val">{t("Guichets 01 à 04", "Counters 01 to 04")}</div></div>', unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Livraison Bagages", "Baggage Claim")}</div><div class="kpi-val">{t("Tapis 1", "Belt 1")}</div></div>', unsafe_allow_html=True)
+
+    # Chatbot intégré pour l'espace passager
+    st.markdown("---")
+    st.subheader(t("💬 Assistant Virtuel AeroFlow", "💬 AeroFlow Virtual Assistant"))
+    st.markdown(t("Posez vos questions concernant votre vol, l'embarquement ou les services de l'AIGE.", "Ask your questions regarding your flight, boarding, or AIGE services."))
+
+    if not st.session_state["messages_chat_pax"]:
+        st.session_state["messages_chat_pax"] = [
+            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant virtuel d'AeroFlow. Comment puis-je vous aider pour votre voyage aujourd'hui ?", "Hello! I am AeroFlow's virtual assistant. How can I help you with your trip today?")}
+        ]
+
+    for message in st.session_state["messages_chat_pax"]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt_pax := st.chat_input(t("Posez votre question ici...", "Type your question here...")):
+        st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
+        with st.chat_message("user"):
+            st.markdown(prompt_pax)
+
+        p_low = prompt_pax.lower()
+        est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help"]) or langue_interface == "English"
+
+        if any(w in p_low for w in ["porte", "gate", "embarquement", "boarding"]):
+            rep_pax = "Votre vol embarque actuellement depuis la **Porte 02**." if not est_ang_pax else "Your flight is currently boarding from **Gate 02**."
+        elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt"]):
+            rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1**." if not est_ang_pax else "Your baggage claim is at **Belt 1**."
+        elif any(w in p_low for w in ["statut", "status", "heure", "time", "retard"]):
+            rep_pax = "Votre vol est actuellement affiché **À l'heure 🟢**." if not est_ang_pax else "Your flight is currently displayed as **On Time 🟢**."
+        else:
+            rep_pax = "Je suis l'assistant AeroFlow. Vous pouvez me poser des questions sur votre porte d'embarquement, le statut de votre vol ou la récupération des bagages !" if not est_ang_pax else "I am the AeroFlow assistant. You can ask me about your boarding gate, flight status, or baggage claim!"
+
+        st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
+        with st.chat_message("assistant"):
+            st.markdown(rep_pax)
 
 
 # ------------------------------------------------------------------------------
