@@ -197,7 +197,9 @@ st.markdown(
         box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     }}
     
-    div[data-testid="stForm"] input, .stTextInput input {{
+    div[data-testid="stForm"] input, .stTextInput input, 
+    div[data-testid="stChatInput"] textarea, 
+    div[data-testid="stChatInput"] input {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
         background-color: {input_box_bg} !important;
@@ -205,7 +207,8 @@ st.markdown(
         border: 1px solid {border_color} !important;
     }}
 
-    div[data-testid="stForm"] input::placeholder, .stTextInput input::placeholder {{
+    div[data-testid="stForm"] input::placeholder, .stTextInput input::placeholder,
+    div[data-testid="stChatInput"] textarea::placeholder {{
         color: {placeholder_color} !important;
         -webkit-text-fill-color: {placeholder_color} !important;
         opacity: 1 !important;
@@ -562,7 +565,7 @@ if st.session_state["user_role"] == "passager":
         elif any(w in p_low for w in ["statut", "status", "heure", "time", "retard"]):
             rep_pax = "Votre vol est actuellement affiché **À l'heure 🟢**." if not est_ang_pax else "Your flight is currently displayed as **On Time 🟢**."
         else:
-            rep_pax = "Je suis l'assistant AeroFlow. Vous pouvez me poser des questions sur votre porte d'embarquement, le statut de votre vol ou la récupération des bagages !" if not est_ang_pax else "I am the AeroFlow assistant. You can ask me about your boarding gate, flight status, or baggage claim!"
+            rep_pax = "Je suis l'assistant AeroFlow. Vous pouvez me poser des questions sur votre porte d'embarquement, le statut du vol ou la récupération des bagages !" if not est_ang_pax else "I am the AeroFlow assistant. You can ask me about your boarding gate, flight status, or baggage claim!"
 
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
         with st.chat_message("assistant"):
