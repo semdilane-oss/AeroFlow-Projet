@@ -590,19 +590,19 @@ with exp_col3:
 st.markdown("---")
 st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
 
+# 1. Initialisation de l'historique
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = [
-        {"role": "assistant", "content": "salut"}
+        {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation pour l'AIGE. Comment puis-je vous aider ?"}
     ]
-
-# Affichage du fil de discussion
-for msg in st.session_state["messages_chat"]:
-    st.chat_message(msg["role"]).write(msg["content"])
 
 prompt_utilisateur = None
 mode_vocal = False
 
-# Formulaire Capsule
+# Zone conteneur pour l'historique des messages (AFFICHER EN HAUT)
+chat_container = st.container()
+
+# Formulaire de saisie (AFFICHER EN BAS)
 with st.form(key="gemini_chat_form", clear_on_submit=True):
     col_input, col_mic, col_send = st.columns([10, 1, 1])
     
@@ -650,54 +650,84 @@ with st.form(key="gemini_chat_form", clear_on_submit=True):
         prompt_utilisateur = prompt_texte
         mode_vocal = False
 
-# Traitement de la réponse du Bot
+# 2. Logique de traitement des réponses avec gestion du hors-contexte
 if prompt_utilisateur:
+    # Ajouter le message utilisateur
     st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
-    st.chat_message("user").write(prompt_utilisateur)
 
     q = prompt_utilisateur.lower().strip()
     reponse = ""
     lang_rep = "fr"
 
+    # Mots-clés autorisés liés au domaine aéroportuaire & salutations
+    mots_cles_aero = [
+        "salut", "bonjour", "coucou", "hello", "hi", "hey", "bonsoir",
+        "ça va", "ca va", "comment vas-tu", "merci", "super", "parfait",
+        "vol", "vols", "critique", "critiques", "risque", "alerte", "retard", "escale",
+        "guichet", "guichets", "agent", "agents", "ouvrir", "capacite", "capacité",
+        "passager", "passagers", "pax", "flux", "transit", "total", "affluence",
+        "compagnie", "compagnies", "aige", "aeroflow", "aerobot", "rapport", "pdf"
+    ]
+
+    # Vérification si la question appartient au domaine
+    est_dans_le_contexte = any(mot in q for mot in mots_cles_aero)
     is_english = any(w in q for w in ["hello", "hi", "flight", "critical", "counter", "agent", "passenger", "thanks"])
 
-    if is_english:
-        lang_rep = "en"
-        if any(k in q for k in ["hello", "hi", "hey"]):
-            reponse = "Hello! How can I help you today with airport operations?"
-        elif any(k in q for k in ["critical", "risk", "alert"]):
-            if not vols_critiques.empty:
-                nb = len(vols_critiques)
-                pax_t = int(vols_critiques["Passagers_Transit"].sum())
-                reponse = f"⚠️ We have {nb} critical flight(s) representing {pax_t} transit passengers."
-            else:
-                reponse = "🟢 Everything is clear! No critical flights reported."
+    if not est_dans_le_contexte:
+        # Réponse générique d'orientation hors-contexte
+        if is_english:
+            lang_rep = "en"
+            reponse = (
+                "Je ne peux pas vous aider pour cette question. "
+                "Cependant, je peux vous renseigner sur la gestion des vols critiques, "
+                "l'estimation des guichets à ouvrir ou le flux des passagers de l'AIGE."
+            )
         else:
-            reponse = "🤖 How can I help you regarding critical flights, counter status, or passenger flow?"
+            lang_rep = "fr"
+            reponse = (
+                "Je ne peux pas vous aider pour cette question. "
+                "Cependant, je peux vous renseigner sur la gestion des vols critiques, "
+                "l'estimation des guichets à ouvrir ou le suivi des flux de passagers à l'AIGE."
+            )
     else:
-        lang_rep = "fr"
-        if any(k in q for k in ["salut", "bonjour", "coucou", "hello", "bonsoir"]):
-            reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
-        elif any(k in q for k in ["ça va", "ca va", "comment vas-tu"]):
-            reponse = "Ça va très bien, merci ! Que puis-je faire pour vous ?"
-        elif any(k in q for k in ["merci", "super", "parfait"]):
-            reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions."
-        elif any(k in q for k in ["critique", "risque", "alerte", "retard", "vol"]):
-            if not vols_critiques.empty:
-                nb = len(vols_critiques)
-                pax_t = int(vols_critiques["Passagers_Transit"].sum())
-                reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) représentant {pax_t} passagers en transit rapide."
+        # Traitement des questions métier
+        if is_english:
+            lang_rep = "en"
+            if any(k in q for k in ["hello", "hi", "hey"]):
+                reponse = "Hello! How can I help you today with airport operations?"
+            elif any(k in q for k in ["critical", "risk", "alert"]):
+                if not vols_critiques.empty:
+                    nb = len(vols_critiques)
+                    pax_t = int(vols_critiques["Passagers_Transit"].sum())
+                    reponse = f"⚠️ We have {nb} critical flight(s) representing {pax_t} transit passengers."
+                else:
+                    reponse = "🟢 Everything is clear! No critical flights reported."
             else:
-                reponse = "🟢 Aucun vol critique n'est à signaler. La situation est sous contrôle !"
-        elif any(k in q for k in ["guichet", "agent", "ouvrir"]):
-            reponse = f"💡 Actuellement, {guichets_ouverts} guichet(s) ouvert(s). Il est recommandé d'en ouvrir au moins {guichets_recommandes}."
-        elif any(k in q for k in ["passager", "flux", "total", "monde"]):
-            reponse = f"📊 Passagers attendus aujourd'hui : {total_passagers:,} (dont {total_transit:,} en transit)."
+                reponse = "🤖 How can I help you regarding critical flights, counter status, or passenger flow?"
         else:
-            reponse = "🤖 Salut ! Je peux vous renseigner sur les **vols critiques**, les **guichets** ou le **nombre de passagers**."
+            lang_rep = "fr"
+            if any(k in q for k in ["salut", "bonjour", "coucou", "hello", "bonsoir"]):
+                reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
+            elif any(k in q for k in ["ça va", "ca va", "comment vas-tu"]):
+                reponse = "Ça va très bien, merci ! Que puis-je faire pour vous ?"
+            elif any(k in q for k in ["merci", "super", "parfait"]):
+                reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions."
+            elif any(k in q for k in ["critique", "risque", "alerte", "retard", "vol", "escale"]):
+                if not vols_critiques.empty:
+                    nb = len(vols_critiques)
+                    pax_t = int(vols_critiques["Passagers_Transit"].sum())
+                    reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) représentant {pax_t} passagers en transit rapide."
+                else:
+                    reponse = "🟢 Aucun vol critique n'est à signaler. La situation est sous contrôle !"
+            elif any(k in q for k in ["guichet", "agent", "ouvrir", "capacite"]):
+                reponse = f"💡 Actuellement, {guichets_ouverts} guichet(s) ouvert(s). Il est recommandé d'en ouvrir au moins {guichets_recommandes}."
+            elif any(k in q for k in ["passager", "flux", "total", "transit", "affluence"]):
+                reponse = f"📊 Passagers attendus aujourd'hui : {total_passagers:,} (dont {total_transit:,} en transit)."
+            else:
+                reponse = "🤖 Je peux vous renseigner sur les **vols critiques**, le nombre de **guichets** ou les **flux de passagers**."
 
+    # Ajouter la réponse du bot
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
-    st.chat_message("assistant").write(reponse)
 
     if mode_vocal:
         try:
@@ -709,3 +739,8 @@ if prompt_utilisateur:
             st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
         except Exception:
             pass
+
+# 3. Rendu de tous les messages dans le conteneur du HAUT
+with chat_container:
+    for msg in st.session_state["messages_chat"]:
+        st.chat_message(msg["role"]).write(msg["content"])
