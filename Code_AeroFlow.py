@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from gtts import gTTS
+from streamlit_mic_recorder import speech_to_text
 
 # Imports ReportLab pour la génération de rapports PDF
 try:
@@ -211,7 +212,6 @@ st.markdown(
         opacity: 1 !important;
     }}
 
-    /* Styles ciblés pour rendre le champ de saisie du Chat (st.chat_input) parfaitement lisible */
     div[data-testid="stChatInput"] textarea {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
@@ -554,7 +554,7 @@ if st.session_state["user_role"] == "passager":
     # Chatbot intégré pour l'espace passager
     st.markdown("---")
     st.subheader(t("💬 Assistant Virtuel AeroFlow", "💬 AeroFlow Virtual Assistant"))
-    st.markdown(t("Posez vos questions concernant votre vol, l'embarquement ou les services de l'AIGE.", "Ask your questions regarding your flight, boarding, or AIGE services."))
+    st.markdown(t("Posez vos questions concernant votre vol, l'embarquement ou les services de l'AIGE (par écrit ou par la voix).", "Ask your questions regarding your flight, boarding, or AIGE services (by text or voice)."))
 
     if not st.session_state["messages_chat_pax"]:
         st.session_state["messages_chat_pax"] = [
@@ -565,7 +565,18 @@ if st.session_state["user_role"] == "passager":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt_pax := st.chat_input(t("Posez votre question ici...", "Type your question here...")):
+    # Bouton de Dictée Vocale
+    langue_stt = "fr-FR" if langue_interface == "Français" else "en-US"
+    texte_vocal_pax = speech_to_text(
+        start_prompt=t("🎤 Cliquer pour parler", "🎤 Click to speak"),
+        stop_prompt=t("⏹️ Arrêter l'enregistrement", "⏹️ Stop recording"),
+        language=langue_stt,
+        key="mic_pax"
+    )
+
+    prompt_pax = texte_vocal_pax if texte_vocal_pax else st.chat_input(t("Posez votre question ici...", "Type your question here..."))
+
+    if prompt_pax:
         st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
         with st.chat_message("user"):
             st.markdown(prompt_pax)
@@ -766,11 +777,11 @@ elif st.session_state["user_role"] == "agent":
             st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
 
     # --------------------------------------------------------------------------
-    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ
+    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AVEC VOCAL)
     # --------------------------------------------------------------------------
     st.markdown("---")
     st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Bilingue)", "💬 AeroFlow Virtual Assistant (Bilingual Chatbot)"))
-    st.markdown(t("Posez vos questions sur le trafic, les vols ou l'exploitation de l'AIGE (en français ou en anglais).", "Ask your questions about traffic, flights, or AIGE operations (in French or English)."))
+    st.markdown(t("Posez vos questions sur le trafic, les vols ou l'exploitation de l'AIGE (par écrit ou en parlant avec votre voix).", "Ask your questions about traffic, flights, or AIGE operations (by text or speaking with your voice)."))
 
     if "messages_chat" not in st.session_state:
         st.session_state["messages_chat"] = [
@@ -781,7 +792,18 @@ elif st.session_state["user_role"] == "agent":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt_utilisateur := st.chat_input(t("Tapez votre question ici...", "Type your question here...")):
+    # Dictée vocale pour l'agent
+    langue_stt_agent = "fr-FR" if langue_interface == "Français" else "en-US"
+    texte_vocal_agent = speech_to_text(
+        start_prompt=t("🎤 Cliquer pour parler", "🎤 Click to speak"),
+        stop_prompt=t("⏹️ Arrêter l'enregistrement", "⏹️ Stop recording"),
+        language=langue_stt_agent,
+        key="mic_agent"
+    )
+
+    prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
+
+    if prompt_utilisateur:
         st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
         with st.chat_message("user"):
             st.markdown(prompt_utilisateur)
