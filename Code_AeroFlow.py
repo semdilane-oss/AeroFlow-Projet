@@ -73,6 +73,7 @@ with st.sidebar:
 def t(texte_fr, texte_en):
     return texte_fr if langue_interface == "Français" else texte_en
 
+# Définition des couleurs selon le thème AVANT l'injection du CSS
 if st.session_state["theme_sombre"]:
     bg_app = "#131314"
     text_main = "#E3E3E3"
@@ -118,6 +119,11 @@ else:
     success_text = "#166534"
     alert_bg = "#FEF2F2"
     alert_text = "#991B1B"
+    
+    btn_bg_gradient = "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)"
+    banner_bg = "#FEF2F2"
+    banner_border = "#FCA5A5"
+    banner_text = "#991B1B"
 
 st.markdown(
     f"""
