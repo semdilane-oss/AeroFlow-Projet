@@ -32,7 +32,7 @@ except ImportError:
 
 
 # ------------------------------------------------------------------------------
-# 1. CONFIGURATION DE LA PAGE & DESIGN PREMIUM LIGHT / AÉRO
+# 1. CONFIGURATION DE LA PAGE & DESIGN GEMINI DARK / AÉRO
 # ------------------------------------------------------------------------------
 st.set_page_config(
     page_title="AeroFlow — Control Center AIGE",
@@ -41,34 +41,50 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Style CSS incluant le correctif pour la lisibilité du texte dans le Chatbot
 st.markdown(
     """
 <style>
-    .stApp { background-color: #F8FAFC; color: #1E293B; }
-    .header-title { font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: #0F172A; }
-    .header-subtitle { color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }
+    /* Application du thème global moderne */
+    .stApp { background-color: #131314 !important; color: #E3E3E3 !important; }
+    
+    .header-title { font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: #FFFFFF; }
+    .header-subtitle { color: #38BDF8; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }
+    
+    /* KPI Containers */
     .kpi-container {
-        background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;
-        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
+        background-color: #1E1F20; border: 1px solid #444746; border-radius: 12px;
+        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); border-top: 4px solid #38BDF8;
     }
-    .kpi-container-alert { border-top: 4px solid #EF4444 !important; background-color: #FEF2F2; }
-    .kpi-label { font-size: 0.8rem; font-weight: 700; color: #64748B; text-transform: uppercase; }
-    .kpi-val { font-size: 1.8rem; font-weight: 800; color: #0F172A; margin-top: 4px; }
+    .kpi-container-alert { border-top: 4px solid #EF4444 !important; background-color: #2D1517; }
+    .kpi-label { font-size: 0.8rem; font-weight: 700; color: #9CA3AF; text-transform: uppercase; }
+    .kpi-val { font-size: 1.8rem; font-weight: 800; color: #FFFFFF; margin-top: 4px; }
+    
+    /* Boutons */
     div.stButton > button {
         background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
         color: white !important; font-weight: 700 !important; border-radius: 8px !important;
         border: none !important; padding: 10px 20px !important; width: 100%;
     }
     
-    /* FIX LISIBILITÉ DU CHAT : Zone de saisie et texte parfaitement visibles */
-    div[data-baseweb="input"] input {
-        color: #0F172A !important;
-        background-color: #FFFFFF !important;
+    /* Affichage des messages du Chat */
+    .stChatMessage, .stChatMessage p, div[data-testid="stChatMessageContent"] {
+        color: #E3E3E3 !important;
+        font-size: 1rem !important;
     }
-    .stChatInputContainer textarea {
-        color: #0F172A !important;
-        background-color: #FFFFFF !important;
+
+    /* Style du formulaire type Capsule Gemini */
+    div[data-testid="stForm"] {
+        background-color: #1E1F20 !important;
+        border: 1px solid #444746 !important;
+        border-radius: 28px !important;
+        padding: 6px 16px !important;
+    }
+    
+    /* Inscription texte dans la capsule */
+    div[data-testid="stForm"] input {
+        color: #FFFFFF !important;
+        background-color: transparent !important;
+        border: none !important;
     }
 </style>
 """,
@@ -372,7 +388,7 @@ with col_left:
     st.subheader("📊 Affluence Globale par Tranche Horaire")
     if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
         df_affluence_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
-        fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template="plotly_white")
+        fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template="plotly_dark")
         fig_affluence.update_layout(xaxis_title="Tranche Horaire", yaxis_title="Total Passagers", margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_affluence, use_container_width=True)
 
@@ -385,7 +401,7 @@ with col_right:
         df_escale_group = df["Plage_Escale"].value_counts().reset_index()
         df_escale_group.columns = ["Plage_Escale", "Nombre_de_Vols"]
 
-        fig_transit = px.bar(df_escale_group, x="Plage_Escale", y="Nombre_de_Vols", color="Nombre_de_Vols", color_continuous_scale="Reds_r", text_auto=True, template="plotly_white")
+        fig_transit = px.bar(df_escale_group, x="Plage_Escale", y="Nombre_de_Vols", color="Nombre_de_Vols", color_continuous_scale="Reds_r", text_auto=True, template="plotly_dark")
         fig_transit.update_layout(xaxis_title="Plage de Temps d'Escale", yaxis_title="Nombre de Vols", margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_transit, use_container_width=True)
 
@@ -461,7 +477,7 @@ with exp_col3:
         st.warning("Module ReportLab indisponible pour l'export PDF.")
 
 # ------------------------------------------------------------------------------
-# 10. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot)
+# 10. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot - Style Gemini)
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
@@ -471,50 +487,60 @@ if "messages_chat" not in st.session_state:
         {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation AIGE. Comment puis-je vous aider aujourd'hui ?"}
     ]
 
-# Affichage de l'historique des discussions
+# Affichage des messages
 for msg in st.session_state["messages_chat"]:
     st.chat_message(msg["role"]).write(msg["content"])
 
 prompt_utilisateur = None
 mode_vocal = False
 
-# Zone de saisie compacte et chic (Micro + Barre de texte alignés)
-col_barre, col_mic = st.columns([8, 1])
-
-with col_mic:
-    if VOICE_INPUT_AVAILABLE:
-        audio_recorded = mic_recorder(
-            start_prompt="🎙️",
-            stop_prompt="⏹️",
-            key="mic_chat_chic"
+# Capsule unifiée Style Gemini
+with st.form(key="gemini_chat_form", clear_on_submit=True):
+    col_input, col_mic, col_send = st.columns([10, 1, 1])
+    
+    with col_input:
+        prompt_texte = st.text_input(
+            "", 
+            placeholder="Posez votre question à AeroBot...", 
+            label_visibility="collapsed",
+            key="input_gemini_style"
         )
-        if audio_recorded and "bytes" in audio_recorded:
-            audio_bytes = audio_recorded["bytes"]
-            recognizer = sr.Recognizer()
-            try:
-                audio_file = io.BytesIO(audio_bytes)
-                with sr.AudioFile(audio_file) as source:
-                    audio_data = recognizer.record(source)
-                    prompt_utilisateur = recognizer.recognize_google(audio_data, language="fr-FR")
-            except Exception:
+    
+    with col_mic:
+        if VOICE_INPUT_AVAILABLE:
+            audio_recorded = mic_recorder(
+                start_prompt="🎙️",
+                stop_prompt="⏹️",
+                key="mic_gemini_bar"
+            )
+            if audio_recorded and "bytes" in audio_recorded:
+                audio_bytes = audio_recorded["bytes"]
+                recognizer = sr.Recognizer()
                 try:
-                    audio_file.seek(0)
+                    audio_file = io.BytesIO(audio_bytes)
                     with sr.AudioFile(audio_file) as source:
                         audio_data = recognizer.record(source)
-                        prompt_utilisateur = recognizer.recognize_google(audio_data, language="en-US")
+                        prompt_utilisateur = recognizer.recognize_google(audio_data, language="fr-FR")
                 except Exception:
-                    st.error("Désolé, je n'ai pas compris le message vocal.")
-            
-            if prompt_utilisateur:
-                mode_vocal = True
+                    try:
+                        audio_file.seek(0)
+                        with sr.AudioFile(audio_file) as source:
+                            audio_data = recognizer.record(source)
+                            prompt_utilisateur = recognizer.recognize_google(audio_data, language="en-US")
+                    except Exception:
+                        st.error("Rien n'a été entendu.")
+                
+                if prompt_utilisateur:
+                    mode_vocal = True
 
-with col_barre:
-    prompt_texte = st.chat_input("Posez votre question ici (ex: Salut, Vols critiques, Guichets)...")
-    if prompt_texte:
+    with col_send:
+        submit_btn = st.form_submit_button("➔")
+
+    if submit_btn and prompt_texte:
         prompt_utilisateur = prompt_texte
         mode_vocal = False
 
-# Traitement de la réponse
+# Traitement du message
 if prompt_utilisateur:
     st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
     st.chat_message("user").write(prompt_utilisateur)
@@ -523,64 +549,57 @@ if prompt_utilisateur:
     reponse = ""
     lang_rep = "fr"
 
-    # Détection de la langue
     is_english = any(w in q for w in ["hello", "hi", "flight", "critical", "counter", "agent", "passenger", "thanks"])
 
     if is_english:
         lang_rep = "en"
-        if any(k in q for k in ["hello", "hi", "hey", "good morning"]):
+        if any(k in q for k in ["hello", "hi", "hey"]):
             reponse = "Hello! How can I help you today with airport operations?"
-        elif any(k in q for k in ["how are you"]):
-            reponse = "I'm doing great, ready to assist! What do you need help with?"
         elif any(k in q for k in ["critical", "risk", "alert"]):
             if not vols_critiques.empty:
                 nb = len(vols_critiques)
                 pax_t = int(vols_critiques["Passagers_Transit"].sum())
-                reponse = f"⚠️ We have {nb} critical flight(s) with {pax_t} transit passengers."
+                reponse = f"⚠️ We have {nb} critical flight(s) representing {pax_t} transit passengers."
             else:
-                reponse = "🟢 Everything is smooth! No critical flights right now."
+                reponse = "🟢 Everything is clear! No critical flights reported."
         else:
-            reponse = "🤖 I can help you with: **critical flights**, **counters**, or **total passengers**. How can I help?"
+            reponse = "🤖 How can I help you regarding critical flights, counter status, or passenger flow?"
     else:
-        # Français
         lang_rep = "fr"
+        # 1. SALUTATIONS & POLITESSES
         if any(k in q for k in ["salut", "bonjour", "coucou", "hello", "bonsoir"]):
             reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
         elif any(k in q for k in ["ça va", "ca va", "comment vas-tu"]):
             reponse = "Ça va très bien, merci ! Que puis-je faire pour vous ?"
         elif any(k in q for k in ["merci", "super", "parfait"]):
             reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions."
+        
+        # 2. QUESTIONS MÉTIER (Vols, Guichets, Passagers)
         elif any(k in q for k in ["critique", "risque", "alerte", "retard", "vol"]):
             if not vols_critiques.empty:
                 nb = len(vols_critiques)
                 pax_t = int(vols_critiques["Passagers_Transit"].sum())
-                reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) représentant {pax_t} passagers en transit rapide.\n\n"
-                for _, v in vols_critiques.iterrows():
-                    reponse += f"- Vol {v.get('Vol')} ({v.get('Compagnie')}) : Arrivée à {v.get('Heure_Arrivee')}, Escale : {v.get('Temps_Escale_Min')} min.\n"
+                reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) représentant {pax_t} passagers en transit rapide."
             else:
-                reponse = "🟢 Aucun vol critique n'est à signaler. La situation est parfaite !"
+                reponse = "🟢 Aucun vol critique n'est à signaler. La situation est sous contrôle !"
         elif any(k in q for k in ["guichet", "agent", "ouvrir"]):
-            reponse = f"💡 Actuellement, {guichets_ouverts} guichet(s) sont ouverts. Il est recommandé d'en ouvrir au moins {guichets_recommandes}."
+            reponse = f"💡 Actuellement, {guichets_ouverts} guichet(s) ouvert(s). Il est recommandé d'en ouvrir au moins {guichets_recommandes}."
         elif any(k in q for k in ["passager", "flux", "total", "monde"]):
-            reponse = f"📊 Total attendu aujourd'hui : {total_passagers:,} passagers (dont {total_transit:,} en transit)."
+            reponse = f"📊 Passagers attendus aujourd'hui : {total_passagers:,} (dont {total_transit:,} en transit)."
         else:
-            reponse = "🤖 Salut ! Je peux vous informer sur les **vols critiques**, les **guichets** ou le **nombre de passagers**. Que souhaitez-vous savoir ?"
+            reponse = "🤖 Salut ! Je peux vous renseigner sur les **vols critiques**, les **guichets** ou le **nombre de passagers**."
 
     # Affichage de la réponse
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
     st.chat_message("assistant").write(reponse)
 
-    # Audio uniquement si question vocale
+    # Réponse vocale déclenchée uniquement si la question était vocale
     if mode_vocal:
         try:
             texte_audio = reponse.replace("*", "").replace("#", "")
             tts_bot = gTTS(text=texte_audio, lang=lang_rep)
             fp_bot = io.BytesIO()
             tts_bot.write_to_fp(fp_bot)
-            fp_bot.seek(0)
-            st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
-        except Exception:
-            pass
             fp_bot.seek(0)
             st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
         except Exception:
