@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - SÉCURITÉ (MDP >= 6 CARACTÈRES)
+# APPLICATION WEB STREAMLIT - CODE COMPLET & CORRIGÉ
 # ==============================================================================
 
 import glob
@@ -61,7 +61,7 @@ AGENT_CREDENTIALS = {
 
 
 # ------------------------------------------------------------------------------
-# 2. SELECTION DU THÈME & CSS DYNAMIQUE
+# 2. SELECTION DU THÈME & CSS DYNAMIQUE (CORRECTIF VISIBILITÉ MODE CLAIR)
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -180,14 +180,15 @@ st.markdown(
         box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     }}
     
-    div[data-testid="stForm"] input {{
+    div[data-testid="stForm"] input, .stTextInput input {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
         background-color: {input_box_bg} !important;
         font-weight: 600 !important;
+        border: 1px solid {border_color} !important;
     }}
 
-    div[data-testid="stForm"] input::placeholder {{
+    div[data-testid="stForm"] input::placeholder, .stTextInput input::placeholder {{
         color: {placeholder_color} !important;
         -webkit-text-fill-color: {placeholder_color} !important;
         opacity: 1 !important;
@@ -426,7 +427,7 @@ if st.session_state["user_role"] is None:
                     else:
                         st.error("Identifiant ou mot de passe incorrect.")
 
-        else:  # Mot de passe oublié passager
+        else:  
             st.warning("🔄 Réinitialisation de votre mot de passe voyageur (6 caractères minimum)")
             with st.form("form_oubli_pax"):
                 pax_id_reset = st.text_input("Votre Numéro de Vol ou Email enregistré")
