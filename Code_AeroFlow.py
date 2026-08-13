@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - DESIGN DYNAMIQUE (MODE CLAIR / SOMBRE)
+# APPLICATION WEB STREAMLIT - DESIGN DYNAMIQUE (MODE CLAIR / SOMBRE FIXÉ)
 # ==============================================================================
 
 import glob
@@ -65,6 +65,7 @@ if st.session_state["theme_sombre"]:
     title_color = "#FFFFFF"
     plotly_template = "plotly_dark"
     input_text_color = "#FFFFFF"
+    radio_text_color = "#E3E3E3"
 else:
     # THÈME CLAIR
     bg_app = "#F8FAFC"
@@ -74,6 +75,7 @@ else:
     title_color = "#0F172A"
     plotly_template = "plotly_white"
     input_text_color = "#0F172A"
+    radio_text_color = "#0F172A"
 
 st.markdown(
     f"""
@@ -93,7 +95,13 @@ st.markdown(
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'}; text-transform: uppercase; }}
     .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
-    /* Boutons */
+    /* Correctif Visibilité Boutons Radio (Langue de l'annonce) */
+    div[data-testid="stRadio"] label, div[data-testid="stRadio"] p {{
+        color: {radio_text_color} !important;
+        font-weight: 600 !important;
+    }}
+    
+    /* Boutons Généraux */
     div.stButton > button {{
         background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
         color: white !important; font-weight: 700 !important; border-radius: 8px !important;
@@ -121,6 +129,14 @@ st.markdown(
         color: {input_text_color} !important;
         background-color: transparent !important;
         border: none !important;
+    }}
+
+    /* Correctif du Bouton Micro */
+    div[data-testid="stForm"] button {{
+        background: transparent !important;
+        border: none !important;
+        color: {title_color} !important;
+        font-size: 1.2rem !important;
     }}
 </style>
 """,
@@ -567,6 +583,8 @@ with st.form(key="gemini_chat_form", clear_on_submit=True):
                 
                 if prompt_utilisateur:
                     mode_vocal = True
+        else:
+            st.write("🎙️")
 
     with col_send:
         submit_btn = st.form_submit_button("➔")
