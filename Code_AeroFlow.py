@@ -592,7 +592,6 @@ if st.session_state["user_role"] == "passager":
         p_low = prompt_pax.lower()
         est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help"]) or langue_interface == "English"
 
-        # Moteur de réponse enrichi pour le Passager (Salutations, Vols, Bagages, Horaires, etc.)
         if any(w in p_low for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
             rep_pax = "Bonjour et bienvenue à l'Aéroport International Gnassingbé Eyadéma (AIGE) ! C'est un plaisir de vous accompagner. Comment puis-je vous aider concernant votre vol ou vos bagages aujourd'hui ?" if not est_ang_pax else "Hello and welcome to Gnassingbé Eyadéma International Airport (AIGE)! It's a pleasure to assist you. How can I help you with your flight or luggage today?"
         elif any(w in p_low for w in ["merci", "thank"]):
@@ -791,15 +790,15 @@ elif st.session_state["user_role"] == "agent":
             st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
 
     # --------------------------------------------------------------------------
-    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AGENT)
+    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AGENT) - ULTRA COMPLET
     # --------------------------------------------------------------------------
     st.markdown("---")
-    st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Bilingue)", "💬 AeroFlow Virtual Assistant (Bilingual Chatbot)"))
-    st.markdown(t("Posez vos questions sur le trafic, les vols ou l'exploitation de l'AIGE (par écrit ou en parlant avec votre voix).", "Ask your questions about traffic, flights, or AIGE operations (by text or speaking with your voice)."))
+    st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Expert — Trafic & Régulation)", "💬 AeroFlow Virtual Assistant (Expert Chatbot — Traffic & Regulation)"))
+    st.markdown(t("Posez vos questions sur le trafic, les solutions en cas critique, la liste complète des vols de la journée, les heures de départ, ou le temps restant avant le départ.", "Ask your questions about traffic, solutions for critical cases, the complete list of daily flights, departure times, or remaining time before departure."))
 
     if not st.session_state["messages_chat"]:
         st.session_state["messages_chat"] = [
-            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Comment puis-je vous aider aujourd'hui ?", "Hello! I am AeroFlow's intelligent assistant. How can I help you today?")}
+            {"role": "assistant", "content": t("Bonjour l'expert ! Je suis votre assistant opérationnel AeroFlow. Je peux lister tous les vols de la journée, calculer le temps restant avant le départ en temps réel, analyser les situations critiques et vous fournir des solutions immédiates (ouverture de guichets prioritaires, escortes passagers, fast-track douanes). Que souhaitez-vous savoir ?", "Hello expert! I am your AeroFlow operational assistant. I can list all daily flights, calculate the time remaining before departure in real-time, analyze critical situations, and provide immediate solutions (opening priority counters, passenger escorts, custom fast-tracks). What would you like to know?")}
         ]
 
     # Disposition inversée : Affichage des messages au-dessus de la zone de saisie
@@ -819,7 +818,7 @@ elif st.session_state["user_role"] == "agent":
         )
 
     with col_input_agent:
-        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_agent")
+        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici (ex: liste des vols, temps restant vol KP010, solution cas critique...)", "Type your question here (e.g. flight list, remaining time flight KP010, critical case solution...)"), key="chat_input_agent")
 
     prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else prompt_saisi_agent
 
@@ -827,40 +826,120 @@ elif st.session_state["user_role"] == "agent":
         st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
 
         p_lower = prompt_utilisateur.lower()
-        est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help"]) or langue_interface == "English"
+        est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help", "list", "time", "remaining", "solution"]) or langue_interface == "English"
 
-        # Moteur de réponse enrichi pour l'Agent (Salutations, Vols, Passagers, Capacité, Alertes)
-        if any(w in p_lower for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
-            reponse_bot = "Bonjour cher collègue ! Bienvenue au PC Sécurité et Régulation de l'AIGE. Je suis à votre entière disposition pour analyser le trafic, superviser les vols critiques ou ajuster la capacité des guichets." if not est_anglais else "Hello colleague! Welcome to the AIGE Security and Regulation PC. I am at your full disposal to analyze traffic, supervise critical flights, or adjust counter capacity."
-        elif any(w in p_lower for w in ["merci", "thank"]):
-            reponse_bot = "Avec grand plaisir ! Bon courage pour la supervision et la régulation des flux à l'AIGE." if not est_anglais else "With great pleasure! Good luck with the traffic supervision and regulation at AIGE."
-        elif any(w in p_lower for w in ["critique", "critical", "delay", "retard"]):
+        # Heure actuelle (système / temps réel)
+        maintenant = datetime.datetime.now()
+        heure_actuelle_str = maintenant.strftime("%H:%M")
+
+        # Moteur d'analyse expert ultra-complet pour l'Agent
+        reponse_bot = ""
+
+        # 1. LISTE DES VOLS DE LA JOURNÉE
+        if any(w in p_lower for w in ["liste", "vol", "vols", "journee", "programme", "tous", "flight", "schedule", "all"]):
+            if not df.empty:
+                l_vols = []
+                for _, r in df.iterrows():
+                    v_num = r.get("Vol", "N/A")
+                    v_comp = r.get("Compagnie", "N/A")
+                    v_arr = r.get("Heure_Arrivee", "N/A")
+                    v_pax = r.get("Passagers", 0)
+                    v_esc = r.get("Temps_Escale_Min", "N/A")
+                    l_vols.append(f"- **Vol {v_num}** ({v_comp}) | Arrivée : **{v_arr}** | Passagers : **{v_pax} pax** | Escale : **{v_esc} min**")
+                
+                liste_str = "\n".join(l_vols)
+                if est_anglais:
+                    reponse_bot = f"📋 **Complete Daily Flight Schedule at AIGE:**\n\n{liste_str}\n\n*All movements are synchronized with the control center.*"
+                else:
+                    reponse_bot = f"📋 **Programme complet des vols de la journée à l'AIGE :**\n\n{liste_str}\n\n*Tous les mouvements sont synchronisés en temps réel avec le PC Sécurité.*"
+            else:
+                reponse_bot = "⚠️ Aucun vol n'est actuellement chargé dans le système."
+
+        # 2. TEMPS RESTANT AVANT LE DÉPART / ARRIVÉE
+        elif any(w in p_lower for w in ["temps", "restant", "reste", "combien de temps", "heure", "depart", "remaining", "time", "left"]):
+            # Recherche d'un numéro de vol spécifique dans la question (ex: KP010, AF850)
+            vol_trouve = None
+            for _, r in df.iterrows():
+                v_code = str(r.get("Vol", "")).upper()
+                if v_code and v_code in p_lower.upper():
+                    vol_trouve = r
+                    break
+            
+            if vol_trouve is not None:
+                v_num = vol_trouve.get("Vol")
+                v_arr = str(vol_trouve.get("Heure_Arrivee", "12:00"))
+                v_esc = int(vol_trouve.get("Temps_Escale_Min", 45))
+                v_comp = vol_trouve.get("Compagnie")
+                
+                try:
+                    h_arr_dt = datetime.datetime.strptime(v_arr, "%H:%M").time()
+                    dt_arrivee_complet = datetime.datetime.combine(datetime.date.today(), h_arr_dt)
+                    dt_depart_complet = dt_arrivee_complet + datetime.timedelta(minutes=v_esc)
+                    
+                    delta = dt_depart_complet - maintenant
+                    minutes_restantes = int(delta.total_seconds() / 60)
+                    
+                    if minutes_restantes > 0:
+                        heures_r = minutes_restantes // 60
+                        mins_r = minutes_restantes % 60
+                        temps_str = f"{heures_r}h {mins_r}min" if heures_r > 0 else f"{mins_r} minutes"
+                    else:
+                        temps_str = "Vol déjà parti ou échéance dépassée"
+
+                    if est_anglais:
+                        reponse_bot = f"⏱️ **Flight Status {v_num} ({v_comp}):**\n- Scheduled Arrival: **{v_arr}**\n- Layover duration: **{v_esc} min**\n- Calculated Departure: **{dt_depart_complet.strftime('%H:%M')}**\n- **Time remaining before departure:** ⏳ **{temps_str}**"
+                    else:
+                        reponse_bot = f"⏱️ **État et Temps Restant — Vol {v_num} ({v_comp}) :**\n- Heure d'arrivée prévue : **{v_arr}**\n- Temps d'escale : **{v_esc} min**\n- Heure de départ estimée : **{dt_depart_complet.strftime('%H:%M')}**\n- **Temps restant avant le départ :** ⏳ **{temps_str}** (Heure actuelle : {heure_actuelle_str})"
+                except Exception:
+                    reponse_bot = f"Le vol {v_num} arrive à {v_arr} avec une escale de {v_esc} min."
+            else:
+                # Si aucun vol précis n'est mentionné, lister le temps restant pour tous les vols critiques ou imminents
+                l_temps = []
+                for _, r in df.iterrows():
+                    v_num = r.get("Vol")
+                    v_arr = str(r.get("Heure_Arrivee", "12:00"))
+                    v_esc = int(r.get("Temps_Escale_Min", 45))
+                    try:
+                        h_arr_dt = datetime.datetime.strptime(v_arr, "%H:%M").time()
+                        dt_dep = datetime.datetime.combine(datetime.date.today(), h_arr_dt) + datetime.timedelta(minutes=v_esc)
+                        delta = dt_dep - maintenant
+                        m_rest = int(delta.total_seconds() / 60)
+                        l_temps.append(f"- **Vol {v_num}** (Arr: {v_arr}) : Départ à {dt_dep.strftime('%H:%M')} (Reste : **{m_rest} min**)")
+                    except:
+                        pass
+                
+                t_str = "\n".join(l_temps)
+                if est_anglais:
+                    reponse_bot = f"⏱️ **Remaining time for today's flights:**\n\n{t_str}\n\n*(Specify a flight number like 'KP010' for precise details)*"
+                else:
+                    reponse_bot = f"⏱️ **Temps restant pour les vols du jour :**\n\n{t_str}\n\n*(Précisez un numéro de vol comme 'KP010' dans votre question pour un calcul instantané)*"
+
+        # 3. SOLUTIONS POUR CAS CRITIQUES & PROBLÈMES DIFFICILES
+        elif any(w in p_lower for w in ["critique", "solution", "difficile", "probleme", "panne", "retard", "urgence", "bloque", "critical", "problem", "solve", "help", "emergency"]):
             nb_c = len(vols_critiques)
             if est_anglais:
-                reponse_bot = f"There are currently {nb_c} critical flight(s) with a layover of 45 minutes or less requiring close monitoring."
+                reponse_bot = f"🚨 **Expert Protocols & Solutions for Critical Cases ({nb_c} critical flights detected):**\n\n" \
+                              f"1. **Immediate Counter Scaling:** Open at least {guichets_recommandes} processing counters immediately to absorb peak transit.\n" \
+                              f"2. **Fast-Track Priority Escort:** Deploy mobile security agents (PC Sécurité) at tarmac gates to escort tight-connection passengers directly to boarding gates.\n" \
+                              f"3. **Baggage Fast-Handling:** Instruct baggage handlers (Tapis 1) to prioritize transfer luggage containers of flights with $\\le 45$ min layovers.\n" \
+                              f"4. **Airline Coordination:** Directly contact ground handling (ASKY / Air France handlers) to hold boarding doors open for 5 extra minutes if transit buses are delayed."
             else:
-                reponse_bot = f"Il y a actuellement {nb_c} vol(s) critique(s) avec un temps d'escale inférieur ou égal à 45 minutes nécessitant une attention particulière."
-        elif any(w in p_lower for w in ["passager", "pax", "passenger", "total"]):
-            if est_anglais:
-                reponse_bot = f"Expected passenger traffic today is {total_passagers:,} passengers, including {total_transit:,} in transit."
-            else:
-                reponse_bot = f"Le trafic passagers attendu aujourd'hui est de {total_passagers:,} passagers, dont {total_transit:,} en transit."
-        elif any(w in p_lower for w in ["guichet", "counter", "agent", "capacity", "capacite"]):
-            if est_anglais:
-                reponse_bot = f"There are {guichets_ouverts} counters currently open on-site, providing an estimated processing capacity of {capacite_agent_heure} pax/h/agent."
-            else:
-                reponse_bot = f"Il y a {guichets_ouverts} guichets ouverts sur le terrain, offrant une capacité de traitement estimée à {capacite_agent_heure} pax/h/agent."
-        elif any(w in p_lower for w in ["compagnie", "airline", "programme", "schedule", "vol", "flight"]):
-            nb_vols_total = len(df) if not df.empty else 0
-            if est_anglais:
-                reponse_bot = f"The active flight schedule contains {nb_vols_total} flights operated by companies like ASKY, Air France, Ethiopian Airlines, etc."
-            else:
-                reponse_bot = f"Le programme des vols actif comporte {nb_vols_total} mouvements assurés par des compagnies telles qu'ASKY, Air France, Ethiopian Airlines, etc."
+                reponse_bot = f"🚨 **Protocoles d'Urgence & Solutions Expertes ({nb_c} vol(s) critique(s) détecté(s)) :**\n\n" \
+                              f"1. **Renforcement Immédiat des Guichets :** Ouvrir au minimum **{guichets_recommandes} guichets** pour désengorger la file d'attente.\n" \
+                              f"2. **Escorte Fast-Track (Police / Sûreté) :** Dépêcher une équipe mobile au pied de l'avion pour exfiltrer les passagers en correspondance serrée et les faire passer par le circuit prioritaire.\n" \
+                              f"3. **Priorisation Bagages Soute :** Demander au service piste de traiter en priorité absolue les conteneurs de transit des vols avec escale $\\le 45$ min.\n" \
+                              f"4. **Coordination Compagnie :** Alerter le responsable escale (ex: ASKY / Air France) pour maintenir la porte d'embarquement ouverte 5 minutes supplémentaires si le pax est en transit immédiat."
+
+        # 4. SALUTATIONS & AUTRES
+        elif any(w in p_lower for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
+            reponse_bot = "Bonjour cher collègue ! Je suis prêt. Posez-moi n'importe quelle question sur le trafic, demandez la liste des vols, le temps restant avant le départ d'un vol précis, ou les solutions à appliquer en cas critique !" if not est_anglais else "Hello colleague! I am ready. Ask me any traffic question, request the flight list, check remaining time before departure, or ask for solutions in critical cases!"
+        elif any(w in p_lower for w in ["merci", "thank"]):
+            reponse_bot = "Avec grand plaisir ! Bon courage pour la gestion des flux à l'AIGE." if not est_anglais else "With great pleasure! Good luck managing the traffic at AIGE."
         else:
             if est_anglais:
-                reponse_bot = "I am AeroFlow's operational assistant. You can ask me about passenger numbers, critical flights, counter capacity, or flight schedules at AIGE!"
+                reponse_bot = "I am AeroFlow's expert assistant. You can ask me to list all daily flights, check the exact remaining time before a flight's departure, get solutions for critical cases, or check passenger numbers and counter capacity."
             else:
-                reponse_bot = "Je suis l'assistant opérationnel d'AeroFlow. Vous pouvez m'interroger sur le nombre de passagers, les vols critiques, la capacité des guichets ou l'état du trafic à l'AIGE !"
+                reponse_bot = "Je suis l'assistant expert d'AeroFlow. Vous pouvez me demander de lister tous les vols du jour, de calculer le temps exact restant avant le départ d'un vol, de vous donner les solutions en cas critique, ou d'analyser l'affluence de l'AIGE !"
 
         st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
         st.rerun()
