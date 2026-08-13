@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - DESIGN DYNAMIQUE, RÔLES & ACCESSIBILITÉ
+# APPLICATION WEB STREAMLIT - SÉCURITÉ (MDP >= 6 CARACTÈRES)
 # ==============================================================================
 
 import glob
@@ -41,13 +41,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Initialisation du thème dans le Session State (par défaut : Clair)
 if "theme_sombre" not in st.session_state:
     st.session_state["theme_sombre"] = False
 
-# Session State pour l'Authentification et les Rôles
 if "user_role" not in st.session_state:
-    st.session_state["user_role"] = None  # Options: 'passager', 'agent', None
+    st.session_state["user_role"] = None  # 'passager', 'agent', None
 
 if "current_user" not in st.session_state:
     st.session_state["current_user"] = ""
@@ -55,7 +53,7 @@ if "current_user" not in st.session_state:
 if "db_passagers" not in st.session_state:
     st.session_state["db_passagers"] = {}
 
-# Identifiants réservés aux agents de l'ANAC / PC Sécurité
+# Identifiants STRICTS des agents ANAC / PC Sécurité (Mots de passe >= 6 caractères)
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
     "agent_p2": "lome2026"
@@ -63,7 +61,7 @@ AGENT_CREDENTIALS = {
 
 
 # ------------------------------------------------------------------------------
-# 2. SELECTION DU THÈME & CSS DYNAMIQUE (ONGLETS & ALERTES CORRIGÉS)
+# 2. SELECTION DU THÈME & CSS DYNAMIQUE
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -71,7 +69,6 @@ with st.sidebar:
     st.session_state["theme_sombre"] = mode_nuit
 
 if st.session_state["theme_sombre"]:
-    # THÈME SOMBRE
     bg_app = "#131314"
     text_main = "#E3E3E3"
     card_bg = "#1E1F20"
@@ -87,13 +84,11 @@ if st.session_state["theme_sombre"]:
     chat_text = "#E3E3E3"
     avatar_bg = "#EF4444"
     
-    # Couleurs d'alerte mode sombre
     success_bg = "#064E3B"
     success_text = "#ECFDF5"
-    warning_bg = "#78350F"
-    warning_text = "#FEF3C7"
+    alert_bg = "#2D1517"
+    alert_text = "#FCA5A5"
 else:
-    # THÈME CLAIR (Textes forcés sombres et contrastés)
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
     card_bg = "#FFFFFF"
@@ -109,11 +104,10 @@ else:
     chat_text = "#0F172A"
     avatar_bg = "#0284C7"
     
-    # Couleurs d'alerte mode clair (bien lisibles)
     success_bg = "#DCFCE7"
     success_text = "#166534"
-    warning_bg = "#FEF9C3"
-    warning_text = "#854D0E"
+    alert_bg = "#FEF2F2"
+    alert_text = "#991B1B"
 
 st.markdown(
     f"""
@@ -123,7 +117,6 @@ st.markdown(
     .header-title {{ font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: {title_color}; }}
     .header-subtitle {{ color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
     
-    /* --- CORRECTION VISIBILITÉ DES ONGLETS (TABS) --- */
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
         color: {text_main} !important;
         font-weight: 700 !important;
@@ -135,35 +128,28 @@ st.markdown(
         border-radius: 8px 8px 0 0 !important;
         margin-right: 4px;
     }}
-    .stTabs [data-baseweb="tab"] {{
-        height: 50px;
-        white-space: pre-wrap;
-    }}
+    .stTabs [data-baseweb="tab"] {{ height: 50px; white-space: pre-wrap; }}
 
-    /* KPI Containers */
     .kpi-container {{
         background-color: {card_bg}; border: 1px solid {border_color}; border-radius: 12px;
         padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
     }}
-    .kpi-container-alert {{ border-top: 4px solid #EF4444 !important; background-color: {'#2D1517' if st.session_state['theme_sombre'] else '#FEF2F2'}; }}
-    .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'}; text-transform: uppercase; }}
+    .kpi-container-alert {{ border-top: 4px solid #EF4444 !important; background-color: {alert_bg}; }}
+    .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#475569'}; text-transform: uppercase; }}
     .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
-    /* Visibilité Boutons Radio et Labels */
     div[data-testid="stRadio"] label, div[data-testid="stRadio"] p,
     .stTextInput label, .stSelectbox label, .stCheckbox label {{
         color: {text_main} !important;
         font-weight: 600 !important;
     }}
     
-    /* Boutons Généraux */
     div.stButton > button {{
         background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
         color: white !important; font-weight: 700 !important; border-radius: 8px !important;
         border: none !important; padding: 10px 20px !important; width: 100%;
     }}
     
-    /* Bulle de Chat */
     div[data-testid="stChatMessage"] {{
         background-color: {chat_bg} !important;
         border-radius: 8px !important;
@@ -186,7 +172,6 @@ st.markdown(
         font-size: 1.05rem !important;
     }}
 
-    /* --- FORMULAIRES DE SAISIE --- */
     div[data-testid="stForm"] {{
         background-color: {card_bg} !important;
         border: 1px solid {border_color} !important;
@@ -382,9 +367,9 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
     return buffer.getvalue()
 
 
-# ==============================================================================
-# 4. GESTION DES ACCÈS / AUTHENTIFICATION
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# 4. GESTION DES ACCÈS / AUTHENTIFICATION (SÉCURITÉ & MDP >= 6 CARACTÈRES)
+# ------------------------------------------------------------------------------
 
 if st.session_state["user_role"] is None:
     st.markdown('<div class="header-title">🛫 Bienvenue sur AeroFlow — AIGE Lomé</div>', unsafe_allow_html=True)
@@ -392,30 +377,32 @@ if st.session_state["user_role"] is None:
 
     tab_passager, tab_agent = st.tabs(["👤 Espace Passager", "🛡️ Espace Agent ANAC / PC Sécurité"])
 
-    # --- ACCÈS PASSAGER ---
     with tab_passager:
         st.subheader("Accès Voyageurs & Passagers")
         
         mode_passager = st.radio(
-            "Statut de votre accès :", 
-            ["Première connexion (Activer mon compte)", "J'ai déjà un compte"],
-            horizontal=True
+            "Action :", 
+            ["Se connecter", "Première connexion (Activer mon compte)", "Mot de passe oublié ?"],
+            horizontal=True,
+            key="radio_mode_pax"
         )
 
         afficher_mdp_pax = st.checkbox("👁️ Afficher les caractères en clair", key="chk_pax_visible")
         input_type_pax = "default" if afficher_mdp_pax else "password"
 
         if mode_passager == "Première connexion (Activer mon compte)":
-            st.info("💡 Indiquez votre numéro de vol ou email, puis définissez un mot de passe.")
+            st.info("💡 Indiquez votre numéro de vol ou email, puis définissez votre mot de passe (6 caractères minimum).")
             with st.form("form_inscription_pax"):
                 pax_id = st.text_input("Numéro de Vol ou Email", placeholder="ex: KP010 ou passager@gmail.com")
-                pax_pass1 = st.text_input("Créer un mot de passe", type=input_type_pax)
+                pax_pass1 = st.text_input("Créer un mot de passe (min. 6 caractères)", type=input_type_pax)
                 pax_pass2 = st.text_input("Confirmer le mot de passe", type=input_type_pax)
                 btn_creer = st.form_submit_button("Activer mon espace voyageur")
 
                 if btn_creer:
                     if not pax_id or not pax_pass1:
                         st.error("Veuillez remplir tous les champs.")
+                    elif len(pax_pass1) < 6:
+                        st.error("⚠️ Le mot de passe doit contenir au moins 6 caractères.")
                     elif pax_pass1 != pax_pass2:
                         st.error("Les mots de passe ne correspondent pas.")
                     else:
@@ -425,7 +412,7 @@ if st.session_state["user_role"] is None:
                         st.success("Compte activé avec succès !")
                         st.rerun()
 
-        else:
+        elif mode_passager == "Se connecter":
             with st.form("form_login_pax"):
                 pax_id = st.text_input("Numéro de Vol ou Email")
                 pax_pass = st.text_input("Mot de passe", type=input_type_pax)
@@ -439,33 +426,67 @@ if st.session_state["user_role"] is None:
                     else:
                         st.error("Identifiant ou mot de passe incorrect.")
 
-    # --- ACCÈS AGENT ANAC ---
+        else:  # Mot de passe oublié passager
+            st.warning("🔄 Réinitialisation de votre mot de passe voyageur (6 caractères minimum)")
+            with st.form("form_oubli_pax"):
+                pax_id_reset = st.text_input("Votre Numéro de Vol ou Email enregistré")
+                pax_nouveau_pass = st.text_input("Nouveau mot de passe (min. 6 caractères)", type=input_type_pax)
+                btn_reset_pax = st.form_submit_button("Mettre à jour mon mot de passe")
+
+                if btn_reset_pax:
+                    if pax_id_reset not in st.session_state["db_passagers"]:
+                        st.error("Cet identifiant n'est associé à aucun compte enregistré.")
+                    elif len(pax_nouveau_pass) < 6:
+                        st.error("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.")
+                    else:
+                        st.session_state["db_passagers"][pax_id_reset] = pax_nouveau_pass
+                        st.success("Mot de passe modifié avec succès ! Vous pouvez vous connecter.")
+
     with tab_agent:
         st.subheader("Accès Sécurisé — Régulation & PC Sécurité")
-        st.warning("⚠️ Zone protégée. Authentification requise pour l'ANAC et l'Exploitation.")
+        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ Zone protégée réservée aux agents habilités de l\'ANAC. Les identifiants sont strictement contrôlés.</div>', unsafe_allow_html=True)
 
         afficher_mdp_agent = st.checkbox("👁️ Afficher les caractères en clair", key="chk_agent_visible")
         input_type_agent = "default" if afficher_mdp_agent else "password"
 
-        with st.form("form_login_agent"):
-            agent_user = st.text_input("Identifiant Agent")
-            agent_pass = st.text_input("Mot de passe", type=input_type_agent)
-            btn_login_agent = st.form_submit_button("Connexion d'exploitation")
+        mode_agent = st.radio("Option agent :", ["Connexion", "Modifier mon mot de passe agent"], horizontal=True)
 
-            if btn_login_agent:
-                if agent_user in AGENT_CREDENTIALS and AGENT_CREDENTIALS[agent_user] == agent_pass:
-                    st.session_state["user_role"] = "agent"
-                    st.session_state["current_user"] = agent_user
-                    st.rerun()
-                else:
-                    st.error("Accès refusé. Identifiants réservés invalides.")
+        if mode_agent == "Connexion":
+            with st.form("form_login_agent"):
+                agent_user = st.text_input("Identifiant Agent officiel (ex: admin_anac)")
+                agent_pass = st.text_input("Mot de passe", type=input_type_agent)
+                btn_login_agent = st.form_submit_button("Connexion d'exploitation")
+
+                if btn_login_agent:
+                    if agent_user in AGENT_CREDENTIALS and AGENT_CREDENTIALS[agent_user] == agent_pass:
+                        st.session_state["user_role"] = "agent"
+                        st.session_state["current_user"] = agent_user
+                        st.rerun()
+                    else:
+                        st.error("⚠️ Accès refusé. Identifiant ou mot de passe agent invalide.")
+        else:
+            with st.form("form_reset_agent"):
+                st.info("Modifiez votre mot de passe agent (6 caractères minimum requis).")
+                agent_user_r = st.text_input("Identifiant Agent officiel")
+                ancien_p = st.text_input("Ancien mot de passe", type=input_type_agent)
+                nouveau_p = st.text_input("Nouveau mot de passe (min. 6 caractères)", type=input_type_agent)
+                btn_chg_agent = st.form_submit_button("Changer mon mot de passe")
+
+                if btn_chg_agent:
+                    if agent_user_r not in AGENT_CREDENTIALS or AGENT_CREDENTIALS[agent_user_r] != ancien_p:
+                        st.error("Identifiant ou ancien mot de passe incorrect.")
+                    elif len(nouveau_p) < 6:
+                        st.error("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.")
+                    else:
+                        AGENT_CREDENTIALS[agent_user_r] = nouveau_p
+                        st.success("Mot de passe agent mis à jour avec succès !")
 
     st.stop()
 
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # 5. VUE ESPACE PASSAGER
-# ==============================================================================
+# ------------------------------------------------------------------------------
 
 if st.session_state["user_role"] == "passager":
     st.sidebar.title("👤 Espace Voyageur")
@@ -475,8 +496,6 @@ if st.session_state["user_role"] == "passager":
         st.rerun()
 
     st.markdown('<div class="header-title">✈️ Votre Espace Voyage — AIGE Lomé</div>', unsafe_allow_html=True)
-    
-    # Message d'accueil avec couleurs adaptées et contrastées
     st.markdown(f'<div style="background-color: {success_bg}; color: {success_text}; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 20px;">Bienvenue ! Retrouvez ici les informations de vol et services utiles.</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
@@ -490,9 +509,9 @@ if st.session_state["user_role"] == "passager":
         st.markdown('<div class="kpi-container"><div class="kpi-label">Livraison Bagages</div><div class="kpi-val">Tapis 1</div></div>', unsafe_allow_html=True)
 
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ
-# ==============================================================================
+# ------------------------------------------------------------------------------
 
 elif st.session_state["user_role"] == "agent":
     
@@ -632,8 +651,7 @@ elif st.session_state["user_role"] == "agent":
                 st.error(f"Erreur de génération vocale : {e}")
 
         with col_info:
-            # Alerte jaune/avertissement avec contraste corrigé et lisible en mode clair
-            st.markdown(f'<div style="background-color: {warning_bg}; color: {warning_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EAB308;">⚠️ {len(vols_critiques):,} vol(s) critique(s) détecté(s) (Escale ≤ 45 min)</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ {len(vols_critiques):,} vol(s) critique(s) détecté(s) (Escale ≤ 45 min)</div>', unsafe_allow_html=True)
 
         with st.container(height=280):
             for _, vol in vols_critiques.iterrows():
@@ -667,16 +685,16 @@ elif st.session_state["user_role"] == "agent":
             st.warning("Module ReportLab indisponible pour l'export PDF.")
 
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # 7. MODULE CHATBOT AEROBOOT
-# ==============================================================================
+# ------------------------------------------------------------------------------
 
 st.markdown("---")
 st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
 
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = [
-        {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation pour l'AIGE. Comment puis-je vous aider ?"}
+        {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation pour l'AIGE. Comment puis-je vous aider ? Si vous cherchez des infos sur votre vol, donnez-moi simplement votre compagnie ou votre destination !"}
     ]
 
 prompt_utilisateur = None
@@ -690,7 +708,7 @@ with st.form(key="gemini_chat_form", clear_on_submit=True):
     with col_input:
         prompt_texte = st.text_input(
             "", 
-            placeholder="Posez votre question à AeroBot...", 
+            placeholder="Posez votre question à AeroBot (ex: Vol Asky, porte d'embarquement...)...", 
             label_visibility="collapsed",
             key="input_gemini_style"
         )
@@ -750,66 +768,34 @@ if prompt_utilisateur:
         "how do you do", "whats up", "what's up", "how is it going", "thanks", "thank you"
     ]
 
-    mots_metier = [
-        "vol", "vols", "critique", "critiques", "risque", "alerte", "retard", "escale",
-        "guichet", "guichets", "agent", "agents", "ouvrir", "capacite", "capacité",
-        "passager", "passagers", "pax", "flux", "transit", "total", "affluence",
-        "compagnie", "compagnies", "aige", "aeroflow", "aerobot", "rapport", "pdf",
-        "flight", "flights", "counter", "counters", "passenger", "passengers"
-    ]
+    compagnies_connues = ["asky", "air france", "ethiopian", "turkish", "brussels", "ceiba", "overland", "air peace"]
+    compagnie_trouvee = next((comp for comp in compagnies_connues if comp in q), None)
 
     est_salutation_fr = any(s in q for s in salutations_fr)
     est_salutation_en = any(s in q for s in salutations_en)
-    est_metier = any(m in q for m in mots_metier)
 
     if est_salutation_fr or est_salutation_en:
         if est_salutation_en and not est_salutation_fr:
             lang_rep = "en"
-            if any(k in q for k in ["how are you", "how is it going", "whats up", "what's up"]):
-                reponse = "I'm doing great, thank you! Ready to help with flight operations. How can I assist you today?"
-            elif any(k in q for k in ["thanks", "thank you"]):
-                reponse = "You're welcome! Let me know if you need any other operational details."
-            else:
-                reponse = "Hello! How can I help you today with airport operations?"
+            reponse = "Hello! I can help you with your flight status, boarding gates, or airline info. Could you please tell me your airline or destination?"
         else:
             lang_rep = "fr"
-            if any(k in q for k in ["ça va", "ca va", "comment vas", "tu vas bien", "forme", "sava", "sa va"]):
-                reponse = "Je vais très bien, merci ! Prêt pour le suivi des vols. Que puis-je faire pour vous ?"
-            elif any(k in q for k in ["merci", "super", "parfait", "cool"]):
-                reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions sur l'exploitation."
-            elif any(k in q for k in ["qui es tu", "qui es-tu"]):
-                reponse = "Je suis **AeroBot**, l'assistant virtuel d'exploitation de l'AIGE. Je vous aide à surveiller les vols critiques et à gérer les flux !"
-            else:
-                reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
+            reponse = "Bonjour ! Je suis AeroBot. Pour vous aider au mieux sans votre numéro de vol, dites-moi simplement votre **compagnie aérienne** ou votre **destination** (ex: Asky, Air France...)."
 
-    elif est_metier:
-        is_english = any(w in q for w in ["flight", "critical", "counter", "agent", "passenger"])
-        nb_crit = len(st.session_state["df_vols"][st.session_state["df_vols"]["Temps_Escale_Min"] <= 45]) if "df_vols" in st.session_state and "Temps_Escale_Min" in st.session_state["df_vols"].columns else 0
-        pax_tot = int(st.session_state["df_vols"]["Passagers"].sum()) if "df_vols" in st.session_state and "Passagers" in st.session_state["df_vols"].columns else 0
+    elif compagnie_trouvee:
+        lang_rep = "fr"
+        reponse = f"✈️ Concernant la compagnie **{compagnie_trouvee.capitalize()}**, les comptoirs d'enregistrement principaux sont situés aux Guichets 01 à 04 et l'embarquement s'effectue généralement en Porte 02. Avez-vous besoin d'une information spécifique sur un horaire ?"
 
-        if is_english:
-            lang_rep = "en"
-            if any(k in q for k in ["critical", "risk", "alert"]):
-                reponse = f"⚠️ We currently have {nb_crit} critical flight(s)."
-            else:
-                reponse = f"🤖 Current status: {pax_tot:,} expected passengers today."
-        else:
-            lang_rep = "fr"
-            if any(k in q for k in ["critique", "risque", "alerte", "retard", "vol", "escale"]):
-                reponse = f"⚠️ Nous avons actuellement {nb_crit} vol(s) critique(s) en correspondance rapide (<= 45 min)."
-            elif any(k in q for k in ["guichet", "agent", "ouvrir", "capacite"]):
-                reponse = "💡 Vous pouvez ajuster le nombre de guichets dans le panneau latéral pour recalculer la capacité de traitement."
-            elif any(k in q for k in ["passager", "flux", "total", "transit", "affluence"]):
-                reponse = f"📊 Passagers attendus aujourd'hui : {pax_tot:,} passagers au total."
-            else:
-                reponse = "🤖 Je peux vous renseigner sur les **vols critiques**, le nombre de **guichets** ou les **flux de passagers**."
+    elif any(k in q for k in ["porte", "embarquement", "guichet", "enregistrement", "bagage", "tapis", "retard", "heure"]):
+        lang_rep = "fr"
+        reponse = "ℹ️ Pour vous guider précisément vers votre porte ou vos bagages, pourriez-vous m'indiquer votre **destination** ou votre **compagnie** ? (Par exemple : *« Vol Asky »* ou *« Je vais à Paris »*)."
 
     else:
         lang_rep = "fr"
         reponse = (
-            "Je ne peux pas répondre à cette question hors-sujet. "
-            "Cependant, je peux vous renseigner sur la gestion des vols critiques, "
-            "l'estimation des guichets à ouvrir ou le suivi des flux de passagers à l'AIGE."
+            "Je n'ai pas eu besoin de votre numéro de vol exact ! "
+            "Vous pouvez simplement m'indiquer votre **compagnie** ou votre **destination** "
+            "pour que je vous donne les informations sur votre porte, vos bagages ou vos horaires à l'AIGE."
         )
 
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
