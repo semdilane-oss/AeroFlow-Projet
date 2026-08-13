@@ -65,6 +65,7 @@ if st.session_state["theme_sombre"]:
     title_color = "#FFFFFF"
     plotly_template = "plotly_dark"
     input_text_color = "#FFFFFF"
+    input_bg_color = "#1E1F20"
     radio_text_color = "#E3E3E3"
 else:
     # THÈME CLAIR
@@ -75,6 +76,7 @@ else:
     title_color = "#0F172A"
     plotly_template = "plotly_white"
     input_text_color = "#0F172A"
+    input_bg_color = "#FFFFFF"
     radio_text_color = "#0F172A"
 
 st.markdown(
@@ -117,21 +119,28 @@ st.markdown(
 
     /* Style du formulaire type Capsule Gemini */
     div[data-testid="stForm"] {{
-        background-color: {card_bg} !important;
+        background-color: {input_bg_color} !important;
         border: 1px solid {border_color} !important;
         border-radius: 28px !important;
         padding: 6px 16px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
     }}
     
-    /* Inscription texte dans la capsule */
-    div[data-testid="stForm"] input {{
+    /* Inscription texte dans la capsule - FIX VISIBILITÉ DU TEXTE D'RIT */
+    div[data-testid="stForm"] input, div[data-testid="stTextInput"] input {{
         color: {input_text_color} !important;
+        -webkit-text-fill-color: {input_text_color} !important;
         background-color: transparent !important;
         border: none !important;
     }}
 
-    /* Correctif du Bouton Micro */
+    /* Style du Placeholder (Texte d'indication quand vide) */
+    div[data-testid="stForm"] input::placeholder, div[data-testid="stTextInput"] input::placeholder {{
+        color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
+        -webkit-text-fill-color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
+    }}
+
+    /* Correctif du Bouton Micro et Envoi */
     div[data-testid="stForm"] button {{
         background: transparent !important;
         border: none !important;
