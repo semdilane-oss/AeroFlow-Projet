@@ -564,9 +564,12 @@ if st.session_state["user_role"] == "passager":
             {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant virtuel d'AeroFlow. Comment puis-je vous aider pour votre voyage aujourd'hui ?", "Hello! I am AeroFlow's virtual assistant. How can I help you with your trip today?")}
         ]
 
-    for message in st.session_state["messages_chat_pax"]:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Conteneur pour afficher l'historique du chat en haut
+    chat_container = st.container()
+    with chat_container:
+        for message in st.session_state["messages_chat_pax"]:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
     # Disposition intégrée (Zone de texte + Bouton micro côte à côte)
     col_input_pax, col_mic_pax = st.columns([12, 1])
@@ -587,267 +590,23 @@ if st.session_state["user_role"] == "passager":
 
     if prompt_pax:
         st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
-        with st.chat_message("user"):
-            st.markdown(prompt_pax)
-
+        
         p_low = prompt_pax.lower()
-        est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help"]) or langue_interface == "English"
+        est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help", "hello", "hi", "available"]) or langue_interface == "English"
 
-        if any(w in p_low for w in ["porte", "gate", "embarquement", "boarding"]):
+        # Traitement intelligent et dynamique des questions
+        if any(w in p_low for w in ["salut", "bonjour", "hello", "hi", "coucou"]):
+            rep_pax = "Bonjour ! Je suis l'assistant AeroFlow de l'AIGE. Que puis-je faire pour vous ?" if not est_ang_pax else "Hello! I am the AeroFlow assistant at AIGE. How can I help you?"
+        elif any(w in p_low for w in ["vol", "vols", "disponible", "disponibles", "flight", "flights", "available"]):
+            rep_pax = "Voici les principaux vols disponibles aujourd'hui à l'AIGE : ASKY (vols régionaux fréquents), Air France, Ethiopian Airlines et Turkish Airlines." if not est_ang_pax else "Here are the main flights available today at AIGE: ASKY (frequent regional flights), Air France, Ethiopian Airlines, and Turkish Airlines."
+        elif any(w in p_low for w in ["porte", "gate", "embarquement", "boarding"]):
             rep_pax = "Votre vol embarque actuellement depuis la **Porte 02**." if not est_ang_pax else "Your flight is currently boarding from **Gate 02**."
         elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt"]):
             rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1**." if not est_ang_pax else "Your baggage claim is at **Belt 1**."
         elif any(w in p_low for w in ["statut", "status", "heure", "time", "retard"]):
             rep_pax = "Votre vol est actuellement affiché **À l'heure 🟢**." if not est_ang_pax else "Your flight is currently displayed as **On Time 🟢**."
         else:
-            rep_pax = "Je suis l'assistant AeroFlow. Vous pouvez me poser des questions sur votre porte d'embarquement, le statut du vol ou la récupération des bagages !" if not est_ang_pax else "I am the AeroFlow assistant. You can ask me about your boarding gate, flight status, or baggage claim!"
+            rep_pax = f"Je suis l'assistant AeroFlow. Vous m'avez posé la question : '{prompt_pax}'. Vous pouvez me demander les vols disponibles, votre porte d'embarquement, le statut du vol ou la récupération des bagages !" if not est_ang_pax else f"I am the AeroFlow assistant. You asked: '{prompt_pax}'. You can ask me about available flights, your boarding gate, flight status, or baggage claim!"
 
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
-        with st.chat_message("assistant"):
-            st.markdown(rep_pax)
-
-
-# ------------------------------------------------------------------------------
-# 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ
-# ------------------------------------------------------------------------------
-
-elif st.session_state["user_role"] == "agent":
-    
-    with st.sidebar:
-        st.markdown("---")
-        st.write(f"🛡️ Agent : **{st.session_state['current_user']}**")
-        if st.button(t("Déconnexion Sécurisée", "Secure Sign Out")):
-            st.session_state["user_role"] = None
-            st.rerun()
-
-        st.markdown("---")
-        st.subheader(t("📂 Données de vol", "📂 Flight Data"))
-        fichier_importe = st.file_uploader(t("Charger le programme des vols (CSV)", "Upload flight schedule (CSV)"), type=["csv"])
-
-        csv_modele_exemple = "Vol,Compagnie,Heure_Arrivee,Passagers,Temps_Escale_Min,Taux_Transit\nKP010,ASKY,11:30,120,40,0.45\nAF850,Air France,14:15,280,90,0.15\nET901,Ethiopian Airlines,16:45,190,35,0.30"
-        st.download_button(
-            label=t("📥 Télécharger le modèle CSV exemple", "📥 Download sample CSV template"),
-            data=csv_modele_exemple,
-            file_name="modele_vols_aige.csv",
-            mime="text/csv",
-        )
-
-        if fichier_importe is not None:
-            try:
-                st.session_state["df_vols"] = charger_et_nettoyer_donnees(fichier_importe)
-                st.success(t("Fichier personnalisé actif", "Custom file active"))
-            except Exception as e:
-                st.error(f"{t('Erreur de lecture :', 'Reading error:')} {e}")
-
-        if "df_vols" not in st.session_state:
-            fichiers_csv_locaux = glob.glob("*.csv")
-            if fichiers_csv_locaux:
-                fichier_trouve = fichiers_csv_locaux[0]
-                try:
-                    st.session_state["df_vols"] = charger_et_nettoyer_donnees(fichier_trouve)
-                    st.info(f"{t('Source détectée :', 'Detected source:')} {fichier_trouve}")
-                except Exception as e:
-                    st.error(f"{t('Erreur lors de la lecture de', 'Error reading')} {fichier_trouve} : {e}")
-                    st.stop()
-            else:
-                st.error(t("⚠️ Aucun fichier CSV trouvé dans le dépôt GitHub.", "⚠️ No CSV file found in the GitHub repository."))
-                st.stop()
-
-        df = st.session_state["df_vols"]
-
-        st.markdown("---")
-        capacite_agent_heure = calculer_capacite_dynamique(df)
-
-        if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
-            max_pax_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().max()
-            guichets_recommandes = max(1, math.ceil(max_pax_heure / capacite_agent_heure))
-        else:
-            guichets_recommandes = 4
-
-        st.metric(label=t("🤖 Capacité Estimée (Automatique)", "🤖 Estimated Capacity (Automatic)"), value=f"{capacite_agent_heure} {t('pax/h/agent', 'pax/h/agent')}")
-
-        guichets_ouverts = st.slider(
-            t("Guichets ouverts sur le terrain", "Counters open on site"),
-            1,
-            max(50, guichets_recommandes + 10),
-            guichets_recommandes,
-        )
-
-        if guichets_ouverts < guichets_recommandes:
-            st.warning(f"💡 **{t('Recommandation :', 'Recommendation:')}** {t('Ouvrir au moins', 'Open at least')} **{guichets_recommandes} {t('guichets', 'counters')}** {t('pour absorber la pointe.', 'to handle the peak.')}")
-
-    st.markdown(f'<div class="header-title">{t("✈️ AeroFlow — Operations Control Center", "✈️ AeroFlow — Operations Control Center")}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="header-subtitle">{t("Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & Régulation", "Gnassingbé Eyadéma International Airport (AIGE) | Security PC & Regulation")}</div>', unsafe_allow_html=True)
-
-    vols_critiques = df[df["Temps_Escale_Min"] <= 45] if "Temps_Escale_Min" in df.columns else pd.DataFrame()
-
-    c1, c2, c3, c4 = st.columns(4)
-    total_passagers = int(df["Passagers"].sum()) if "Passagers" in df.columns else 0
-    total_transit = int(df["Passagers_Transit"].sum()) if "Passagers_Transit" in df.columns else 0
-    capacite_totale = int(guichets_ouverts * capacite_agent_heure)
-
-    with c1:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Passagers Attendus", "Expected Passengers")}</div><div class="kpi-val">{total_passagers:,} pax</div></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Flux Transit", "Transit Flow")}</div><div class="kpi-val">{total_transit:,} pax</div></div>', unsafe_allow_html=True)
-    with c3:
-        st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Capacité Traitement", "Processing Capacity")}</div><div class="kpi-val">{capacite_totale:,} pax/h</div></div>', unsafe_allow_html=True)
-    with c4:
-        alert_style = "kpi-container-alert" if len(vols_critiques) > 0 else ""
-        color_val = "#EF4444" if len(vols_critiques) > 0 else "#0284C7"
-        st.markdown(f'<div class="kpi-container {alert_style}"><div class="kpi-label">{t("Vols Critiques (≤45 min)", "Critical Flights (≤45 min)")}</div><div class="kpi-val" style="color: {color_val};">{len(vols_critiques):,} {t("Vol(s)", "Flight(s)")}</div></div>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    col_left, col_right = st.columns(2)
-
-    with col_left:
-        st.subheader(t("📊 Affluence Globale par Tranche Horaire", "📊 Overall Traffic by Time Slot"))
-        if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
-            df_affluence_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
-            fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template=plotly_template)
-            fig_affluence.update_layout(xaxis_title=t("Tranche Horaire", "Time Slot"), yaxis_title=t("Total Passagers", "Total Passengers"), margin=dict(l=10, r=10, t=30, b=10))
-            st.plotly_chart(fig_affluence, use_container_width=True)
-
-    with col_right:
-        st.subheader(t("⏱️ Répartition des Temps d'Escale", "⏱️ Layover Time Distribution"))
-        if "Temps_Escale_Min" in df.columns:
-            bins = [0, 30, 45, 60, 90, 120, 999]
-            labels_fr = ["< 30 min", "30-45 min (Critique)", "45-60 min", "60-90 min", "90-120 min", "> 120 min"]
-            labels_en = ["< 30 min", "30-45 min (Critical)", "45-60 min", "60-90 min", "90-120 min", "> 120 min"]
-            labels = labels_fr if langue_interface == "Français" else labels_en
-            
-            df["Plage_Escale"] = pd.cut(df["Temps_Escale_Min"], bins=bins, labels=labels)
-            df_escale_group = df["Plage_Escale"].value_counts().reset_index()
-            df_escale_group.columns = ["Plage_Escale", "Nombre_de_Vols"]
-
-            fig_transit = px.bar(df_escale_group, x="Plage_Escale", y="Nombre_de_Vols", color="Nombre_de_Vols", color_continuous_scale="Reds_r", text_auto=True, template=plotly_template)
-            fig_transit.update_layout(xaxis_title=t("Plage de Temps d'Escale", "Layover Time Range"), yaxis_title=t("Nombre de Vols", "Number of Flights"), margin=dict(l=10, r=10, t=30, b=10))
-            st.plotly_chart(fig_transit, use_container_width=True)
-
-    st.markdown("---")
-    st.subheader(t("⚠️ Centre d'Alertes et Annonces", "⚠️ Alerts & Announcements Center"))
-
-    if len(vols_critiques) > 0:
-        col_btn, col_info = st.columns([1, 2])
-
-        with col_btn:
-            langue_choisie = st.radio(t("🌐 Langue de l'annonce vocale :", "🌐 Voice announcement language:"), options=["Français", "English"], horizontal=True, key="choix_langue_audio")
-            nb_crit = len(vols_critiques)
-            total_pax_crit = int(vols_critiques["Passagers_Transit"].sum())
-
-            if langue_choisie == "English":
-                code_lang, message = "en", f"Attention Security Control. General alert. A total of {nb_crit} critical flights have been detected, representing {total_pax_crit} passengers in tight connections."
-            else:
-                code_lang, message = "fr", f"Attention PC Sécurité. Alerte générale. Un total de {nb_crit} vols critiques a été détecté, représentant {total_pax_crit} passagers en correspondance rapide."
-
-            try:
-                fp = io.BytesIO()
-                tts = gTTS(text=message, lang=code_lang)
-                tts.write_to_fp(fp)
-                fp.seek(0)
-                st.audio(fp.read(), format="audio/mp3")
-                st.info(f"{t('Annonce disponible :', 'Announcement available:')} « {message} »")
-            except Exception as e:
-                st.error(f"{t('Erreur de génération vocale :', 'Voice generation error:')} {e}")
-
-        with col_info:
-            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
-
-        with st.container(height=280):
-            for _, vol in vols_critiques.iterrows():
-                st.error(f"🔴 **[Vol {vol.get('Vol', 'N/A')} - {vol.get('Compagnie', 'N/A')}]** : {t('Arrivée à', 'Arrival at')} **{vol.get('Heure_Arrivee', 'N/A')}** | **{vol.get('Passagers_Transit', 0)} pax transit** | {t('Escale :', 'Layover:')} **{vol.get('Temps_Escale_Min', 0)} min**")
-    else:
-        st.success(t("✅ Aucun risque de correspondance détecté pour le moment.", "✅ No connection risk detected at the moment."))
-
-    with st.expander(t("📄 Voir le programme détaillé des vols (AIGE)", "📄 View detailed flight schedule (AIGE)")):
-        st.dataframe(df, height=400, hide_index=True)
-
-    st.markdown("---")
-    st.subheader(t("📥 Exportation & Rapports d'Exploitation", "📥 Export & Operational Reports"))
-    exp_col1, exp_col2, exp_col3 = st.columns(3)
-
-    with exp_col1:
-        st.markdown(f"**1. {t('Données des Vols Critiques (CSV)', 'Critical Flights Data (CSV)')}**")
-        if not vols_critiques.empty:
-            st.download_button(label=t("📄 Télécharger Vols Critiques (.csv)", "📄 Download Critical Flights (.csv)"), data=vols_critiques.to_csv(index=False, encoding="utf-8-sig"), file_name=f"vols_critiques_AIGE_{datetime.date.today()}.csv", mime="text/csv")
-        else:
-            st.info(t("Aucun vol critique à exporter.", "No critical flights to export."))
-
-    with exp_col2:
-        st.markdown(f"**2. {t('Programme Complet des Vols (CSV)', 'Full Flight Schedule (CSV)')}**")
-        st.download_button(label=t("📊 Télécharger Programme Complet (.csv)", "📊 Download Full Schedule (.csv)"), data=df.to_csv(index=False, encoding="utf-8-sig"), file_name=f"programme_vols_AIGE_{datetime.date.today()}.csv", mime="text/csv")
-
-    with exp_col3:
-        st.markdown(f"**3. {t('Rapport Synthétique Officiel (PDF)', 'Official Summary Report (PDF)')}**")
-        if REPORTLAB_AVAILABLE:
-            st.download_button(label=t("📑 Télécharger le Rapport (.pdf)", "📑 Download Report (.pdf)"), data=generer_pdf_rapport(df, vols_critiques, total_passagers, total_transit, guichets_ouverts), file_name=f"Rapport_Exploitation_AIGE_{datetime.date.today()}.pdf", mime="application/pdf")
-        else:
-            st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
-
-    # --------------------------------------------------------------------------
-    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AVEC MICRO CÔTE À CÔTE)
-    # --------------------------------------------------------------------------
-    st.markdown("---")
-    st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Bilingue)", "💬 AeroFlow Virtual Assistant (Bilingual Chatbot)"))
-    st.markdown(t("Posez vos questions sur le trafic, les vols ou l'exploitation de l'AIGE (par écrit ou en parlant avec votre voix).", "Ask your questions about traffic, flights, or AIGE operations (by text or speaking with your voice)."))
-
-    if not st.session_state["messages_chat"]:
-        st.session_state["messages_chat"] = [
-            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Comment puis-je vous aider aujourd'hui ?", "Hello! I am AeroFlow's intelligent assistant. How can I help you today?")}
-        ]
-
-    for message in st.session_state["messages_chat"]:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Disposition intégrée (Zone de texte + Bouton micro côte à côte pour l'agent)
-    col_input_agent, col_mic_agent = st.columns([12, 1])
-
-    with col_mic_agent:
-        langue_stt_agent = "fr-FR" if langue_interface == "Français" else "en-US"
-        texte_vocal_agent = speech_to_text(
-            start_prompt="🎙️",
-            stop_prompt="⏹️",
-            language=langue_stt_agent,
-            key="mic_agent_inline"
-        )
-
-    with col_input_agent:
-        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
-
-    prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else prompt_saisi_agent
-
-    if prompt_utilisateur:
-        st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
-        with st.chat_message("user"):
-            st.markdown(prompt_utilisateur)
-
-        p_lower = prompt_utilisateur.lower()
-        est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help"]) or langue_interface == "English"
-
-        if any(w in p_lower for w in ["critique", "critical", "delay", "retard"]):
-            nb_c = len(vols_critiques)
-            if est_anglais:
-                reponse_bot = f"There are currently {nb_c} critical flight(s) with a layover of 45 minutes or less."
-            else:
-                reponse_bot = f"Il y a actuellement {nb_c} vol(s) critique(s) avec un temps d'escale inférieur ou égal à 45 minutes."
-        elif any(w in p_lower for w in ["passager", "pax", "passenger", "total"]):
-            if est_anglais:
-                reponse_bot = f"Expected passenger traffic today is {total_passagers:,} passengers, including {total_transit:,} in transit."
-            else:
-                reponse_bot = f"Le trafic passagers attendu aujourd'hui est de {total_passagers:,} passagers, dont {total_transit:,} en transit."
-        elif any(w in p_lower for w in ["guichet", "counter", "agent", "capacity"]):
-            if est_anglais:
-                reponse_bot = f"There are {guichets_ouverts} counters currently open on-site, with an estimated processing capacity of {capacite_agent_heure} pax/h/agent."
-            else:
-                reponse_bot = f"Il y a {guichets_ouverts} guichets ouverts sur le terrain, avec une capacité de traitement estimée à {capacite_agent_heure} pax/h/agent."
-        else:
-            if est_anglais:
-                reponse_bot = "I am AeroFlow's assistant. You can ask me about passenger numbers, critical flights, or counter capacity at AIGE airport!"
-            else:
-                reponse_bot = "Je suis l'assistant d'AeroFlow. Vous pouvez m'interroger sur le nombre de passagers, les vols critiques ou la capacité des guichets à l'AIGE !"
-
-        st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
-        with st.chat_message("assistant"):
-            st.markdown(reponse_bot)
+        st.rerun()
