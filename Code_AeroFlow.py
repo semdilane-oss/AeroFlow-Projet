@@ -64,30 +64,36 @@ if st.session_state["theme_sombre"]:
     border_color = "#444746"
     title_color = "#FFFFFF"
     plotly_template = "plotly_dark"
-    input_text_color = "#FFFFFF"
-    input_bg_color = "#1E1F20"
     radio_text_color = "#E3E3E3"
     
-    # Couleurs spécifique pour les bulle du Chat
+    # Zone de saisie
+    input_box_bg = "#242731"
+    input_text_color = "#FFFFFF"
+    placeholder_color = "#9CA3AF"
+    
+    # Bulle Chat
     chat_bg = "#2D2E30"
     chat_text = "#E3E3E3"
     avatar_bg = "#EF4444"
 else:
-    # THÈME CLAIR (Ajusté selon l'image demandée)
+    # THÈME CLAIR (Optimisé pour la lisibilité)
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
     card_bg = "#FFFFFF"
     border_color = "#CBD5E1"
     title_color = "#0F172A"
     plotly_template = "plotly_white"
-    input_text_color = "#0F172A"
-    input_bg_color = "#FFFFFF"
     radio_text_color = "#0F172A"
     
-    # Couleurs spécifiques pour reproduire exactement l'image en Mode Clair
-    chat_bg = "#9399A0"       # Gris moyen identique à l'image
-    chat_text = "#0F172A"     # Texte sombre bien lisible
-    avatar_bg = "#FF2A2A"     # Carré rouge vif pour l'avatar
+    # Zone de saisie (Fond sombre interne pour faire ressortir la saisie en Blanc très net)
+    input_box_bg = "#1E293B"
+    input_text_color = "#FFFFFF"
+    placeholder_color = "#94A3B8"
+    
+    # Bulle Chat
+    chat_bg = "#9399A0"
+    chat_text = "#0F172A"
+    avatar_bg = "#FF2A2A"
 
 st.markdown(
     f"""
@@ -107,7 +113,7 @@ st.markdown(
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'}; text-transform: uppercase; }}
     .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
-    /* Correctif Visibilité Boutons Radio */
+    /* Visibilité Boutons Radio */
     div[data-testid="stRadio"] label, div[data-testid="stRadio"] p {{
         color: {radio_text_color} !important;
         font-weight: 600 !important;
@@ -120,9 +126,7 @@ st.markdown(
         border: none !important; padding: 10px 20px !important; width: 100%;
     }}
     
-    /* --- FIX DYNAMIQUEMENT ADAPTÉ AUX MESSAGES DE CHAT (STYLE IMAGE) --- */
-    
-    /* Conteneur principal de la bulle de chat */
+    /* Bulle de Chat */
     div[data-testid="stChatMessage"] {{
         background-color: {chat_bg} !important;
         border-radius: 8px !important;
@@ -131,14 +135,12 @@ st.markdown(
         border: none !important;
     }}
 
-    /* Icône / Avatar rouge sur le côté */
     div[data-testid="stChatMessage"] div[data-testid="stChatMessageAvatar"] {{
         background-color: {avatar_bg} !important;
         border-radius: 8px !important;
         color: #FFFFFF !important;
     }}
 
-    /* Texte des messages */
     div[data-testid="stChatMessage"] p, 
     div[data-testid="stChatMessageContent"] p,
     div[data-testid="stChatMessageContent"] {{
@@ -147,49 +149,50 @@ st.markdown(
         font-size: 1.05rem !important;
     }}
 
-    /* --- FIX CAPSULE & ZONE DE SAISIE STREAMLIT --- */
+    /* --- FIX LISIBILITÉ CHAMP DE SAISIE (CAPSULE PILULE) --- */
     
-    /* Formulaire Capsule Extérieur */
+    /* Conteneur Extérieur Formulaire */
     div[data-testid="stForm"] {{
-        background-color: {input_bg_color} !important;
+        background-color: #FFFFFF !important;
         border: 1px solid {border_color} !important;
-        border-radius: 28px !important;
+        border-radius: 50px !important;
         padding: 4px 16px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
     }}
     
-    /* Nettoyage du conteneur interne de Streamlit */
+    /* Boîte de saisie interne noire/sombre */
     div[data-testid="stForm"] div[data-baseweb="input"],
-    div[data-testid="stForm"] div[data-baseweb="base-input"],
-    div[data-testid="stTextInput"] > div {{
-        background-color: transparent !important;
+    div[data-testid="stForm"] div[data-baseweb="base-input"] {{
+        background-color: {input_box_bg} !important;
+        border-radius: 8px !important;
         border: none !important;
-        box-shadow: none !important;
+        padding: 2px 8px !important;
     }}
     
-    /* Texte Saisi (Couleur dynamique + Fond Transparent) */
+    /* Correctif du texte saisi (Blanc bien visible) */
     div[data-testid="stForm"] input {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
         background-color: transparent !important;
-        font-size: 1rem !important;
-        font-weight: 500 !important;
-        caret-color: {input_text_color} !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
     }}
 
-    /* Placeholder quand le champ est vide */
+    /* Placeholder quand vide */
     div[data-testid="stForm"] input::placeholder {{
-        color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
-        -webkit-text-fill-color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
+        color: {placeholder_color} !important;
+        -webkit-text-fill-color: {placeholder_color} !important;
         opacity: 1 !important;
+        font-weight: 500 !important;
     }}
 
-    /* Boutons Micro et Envoi */
+    /* Boutons Icônes (Micro et Envoi) */
     div[data-testid="stForm"] button {{
         background: transparent !important;
         border: none !important;
-        color: {title_color} !important;
-        font-size: 1.2rem !important;
+        color: #0F172A !important;
+        font-size: 1.3rem !important;
         box-shadow: none !important;
     }}
 </style>
@@ -485,7 +488,7 @@ with c4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 7. GRAPHIQUES ET ANALYSE (ADAPTATIFS SELON LE THÈME)
+# 7. GRAPHIQUES ET ANALYSE
 # ------------------------------------------------------------------------------
 col_left, col_right = st.columns(2)
 
@@ -582,7 +585,7 @@ with exp_col3:
         st.warning("Module ReportLab indisponible pour l'export PDF.")
 
 # ------------------------------------------------------------------------------
-# 11. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot - Style Gemini)
+# 11. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot)
 # ------------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
@@ -592,14 +595,14 @@ if "messages_chat" not in st.session_state:
         {"role": "assistant", "content": "salut"}
     ]
 
-# Affichage des messages
+# Affichage du fil de discussion
 for msg in st.session_state["messages_chat"]:
     st.chat_message(msg["role"]).write(msg["content"])
 
 prompt_utilisateur = None
 mode_vocal = False
 
-# Capsule unifiée Style Gemini
+# Formulaire Capsule
 with st.form(key="gemini_chat_form", clear_on_submit=True):
     col_input, col_mic, col_send = st.columns([10, 1, 1])
     
@@ -647,7 +650,7 @@ with st.form(key="gemini_chat_form", clear_on_submit=True):
         prompt_utilisateur = prompt_texte
         mode_vocal = False
 
-# Traitement du message
+# Traitement de la réponse du Bot
 if prompt_utilisateur:
     st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
     st.chat_message("user").write(prompt_utilisateur)
@@ -673,15 +676,12 @@ if prompt_utilisateur:
             reponse = "🤖 How can I help you regarding critical flights, counter status, or passenger flow?"
     else:
         lang_rep = "fr"
-        # 1. SALUTATIONS & POLITESSES
         if any(k in q for k in ["salut", "bonjour", "coucou", "hello", "bonsoir"]):
             reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
         elif any(k in q for k in ["ça va", "ca va", "comment vas-tu"]):
             reponse = "Ça va très bien, merci ! Que puis-je faire pour vous ?"
         elif any(k in q for k in ["merci", "super", "parfait"]):
             reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions."
-        
-        # 2. QUESTIONS MÉTIER (Vols, Guichets, Passagers)
         elif any(k in q for k in ["critique", "risque", "alerte", "retard", "vol"]):
             if not vols_critiques.empty:
                 nb = len(vols_critiques)
@@ -696,11 +696,9 @@ if prompt_utilisateur:
         else:
             reponse = "🤖 Salut ! Je peux vous renseigner sur les **vols critiques**, les **guichets** ou le **nombre de passagers**."
 
-    # Affichage de la réponse
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
     st.chat_message("assistant").write(reponse)
 
-    # Réponse vocale déclenchée uniquement si la question était vocale
     if mode_vocal:
         try:
             texte_audio = reponse.replace("*", "").replace("#", "")
