@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - CODE COMPLET & BILINGUE (FR / EN)
+# APPLICATION WEB STREAMLIT - CODE COMPLET, BILINGUE & INTELLIGENT (FR / EN)
 # ==============================================================================
 
 import glob
@@ -593,14 +593,21 @@ if st.session_state["user_role"] == "passager":
         p_low = prompt_pax.lower()
         est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help"]) or langue_interface == "English"
 
-        if any(w in p_low for w in ["porte", "gate", "embarquement", "boarding"]):
-            rep_pax = "Votre vol embarque actuellement depuis la **Porte 02**." if not est_ang_pax else "Your flight is currently boarding from **Gate 02**."
-        elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt"]):
-            rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1**." if not est_ang_pax else "Your baggage claim is at **Belt 1**."
-        elif any(w in p_low for w in ["statut", "status", "heure", "time", "retard"]):
-            rep_pax = "Votre vol est actuellement affiché **À l'heure 🟢**." if not est_ang_pax else "Your flight is currently displayed as **On Time 🟢**."
+        # Moteur de réponse enrichi pour le Passager (Salutations, Vols, Bagages, Horaires, etc.)
+        if any(w in p_low for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
+            rep_pax = "Bonjour et bienvenue à l'Aéroport International Gnassingbé Eyadéma (AIGE) ! C'est un plaisir de vous accompagner. Comment puis-je vous aider concernant votre vol ou vos bagages aujourd'hui ?" if not est_ang_pax else "Hello and welcome to Gnassingbé Eyadéma International Airport (AIGE)! It's a pleasure to assist you. How can I help you with your flight or luggage today?"
+        elif any(w in p_low for w in ["merci", "thank"]):
+            rep_pax = "Je vous en prie ! C'est un réel plaisir de vous aider. N'hésitez pas si vous avez d'autres questions pour votre voyage. Bon vol !" if not est_ang_pax else "You're very welcome! It's a real pleasure to help. Feel free to ask if you have any other questions for your trip. Have a great flight!"
+        elif any(w in p_low for w in ["porte", "gate", "embarquement", "boarding"]):
+            rep_pax = "Votre vol embarque actuellement depuis la **Porte 02**. Veillez à vous y présenter 30 minutes avant l'heure de départ." if not est_ang_pax else "Your flight is currently boarding from **Gate 02**. Please make sure to be there 30 minutes before departure time."
+        elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt", "valise", "perdu"]):
+            rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1**. En cas de bagage endommagé ou retardé, veuillez vous adresser immédiatement au comptoir de réclamation de votre compagnie dans le hall d'arrivée." if not est_ang_pax else "Your baggage claim is at **Belt 1**. In case of damaged or delayed luggage, please report immediately to your airline's claim desk in the arrival hall."
+        elif any(w in p_low for w in ["statut", "status", "heure", "time", "retard", "delay", "depart", "arrivee"]):
+            rep_pax = "Votre vol est actuellement affiché **À l'heure 🟢**. Les enregistrements ouvrent 3 heures avant le départ pour les vols internationaux et 2 heures pour les vols régionaux." if not est_ang_pax else "Your flight is currently displayed as **On Time 🟢**. Check-in counters open 3 hours before departure for international flights and 2 hours for regional flights."
+        elif any(w in p_low for w in ["douane", "police", "securite", "security", "passport", "passeport", "visa"]):
+            rep_pax = "Pour le passage de la sécurité et de la police des frontières à l'AIGE, veuillez préparer votre carte d'embarquement ainsi que votre passeport ou pièce d'identité en cours de validité." if not est_ang_pax else "For security and border control at AIGE, please have your boarding card and valid passport or ID ready."
         else:
-            rep_pax = "Je suis l'assistant AeroFlow. Vous pouvez me poser des questions sur votre porte d'embarquement, le statut du vol ou la récupération des bagages !" if not est_ang_pax else "I am the AeroFlow assistant. You can ask me about your boarding gate, flight status, or baggage claim!"
+            rep_pax = "Je suis l'assistant AeroFlow. Je peux vous renseigner sur votre porte d'embarquement, le statut des vols, les consignes bagages, les horaires d'enregistrement ou le passage des douanes à l'AIGE !" if not est_ang_pax else "I am the AeroFlow assistant. I can guide you regarding your boarding gate, flight status, baggage rules, check-in schedules, or customs at AIGE!"
 
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
         with st.chat_message("assistant"):
@@ -825,27 +832,38 @@ elif st.session_state["user_role"] == "agent":
         p_lower = prompt_utilisateur.lower()
         est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help"]) or langue_interface == "English"
 
-        if any(w in p_lower for w in ["critique", "critical", "delay", "retard"]):
+        # Moteur de réponse enrichi pour l'Agent (Salutations, Vols, Passagers, Capacité, Alertes)
+        if any(w in p_lower for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
+            reponse_bot = "Bonjour cher collègue ! Bienvenue au PC Sécurité et Régulation de l'AIGE. Je suis à votre entière disposition pour analyser le trafic, superviser les vols critiques ou ajuster la capacité des guichets." if not est_anglais else "Hello colleague! Welcome to the AIGE Security and Regulation PC. I am at your full disposal to analyze traffic, supervise critical flights, or adjust counter capacity."
+        elif any(w in p_lower for w in ["merci", "thank"]):
+            reponse_bot = "Avec grand plaisir ! Bon courage pour la supervision et la régulation des flux à l'AIGE." if not est_anglais else "With great pleasure! Good luck with the traffic supervision and regulation at AIGE."
+        elif any(w in p_lower for w in ["critique", "critical", "delay", "retard"]):
             nb_c = len(vols_critiques)
             if est_anglais:
-                reponse_bot = f"There are currently {nb_c} critical flight(s) with a layover of 45 minutes or less."
+                reponse_bot = f"There are currently {nb_c} critical flight(s) with a layover of 45 minutes or less requiring close monitoring."
             else:
-                reponse_bot = f"Il y a actuellement {nb_c} vol(s) critique(s) avec un temps d'escale inférieur ou égal à 45 minutes."
+                reponse_bot = f"Il y a actuellement {nb_c} vol(s) critique(s) avec un temps d'escale inférieur ou égal à 45 minutes nécessitant une attention particulière."
         elif any(w in p_lower for w in ["passager", "pax", "passenger", "total"]):
             if est_anglais:
                 reponse_bot = f"Expected passenger traffic today is {total_passagers:,} passengers, including {total_transit:,} in transit."
             else:
                 reponse_bot = f"Le trafic passagers attendu aujourd'hui est de {total_passagers:,} passagers, dont {total_transit:,} en transit."
-        elif any(w in p_lower for w in ["guichet", "counter", "agent", "capacity"]):
+        elif any(w in p_lower for w in ["guichet", "counter", "agent", "capacity", "capacite"]):
             if est_anglais:
-                reponse_bot = f"There are {guichets_ouverts} counters currently open on-site, with an estimated processing capacity of {capacite_agent_heure} pax/h/agent."
+                reponse_bot = f"There are {guichets_ouverts} counters currently open on-site, providing an estimated processing capacity of {capacite_agent_heure} pax/h/agent."
             else:
-                reponse_bot = f"Il y a {guichets_ouverts} guichets ouverts sur le terrain, avec une capacité de traitement estimée à {capacite_agent_heure} pax/h/agent."
+                reponse_bot = f"Il y a {guichets_ouverts} guichets ouverts sur le terrain, offrant une capacité de traitement estimée à {capacite_agent_heure} pax/h/agent."
+        elif any(w in p_lower for w in ["compagnie", "airline", "programme", "schedule", "vol", "flight"]):
+            nb_vols_total = len(df) if not df.empty else 0
+            if est_anglais:
+                reponse_bot = f"The active flight schedule contains {nb_vols_total} flights operated by companies like ASKY, Air France, Ethiopian Airlines, etc."
+            else:
+                reponse_bot = f"Le programme des vols actif comporte {nb_vols_total} mouvements assurés par des compagnies telles qu'ASKY, Air France, Ethiopian Airlines, etc."
         else:
             if est_anglais:
-                reponse_bot = "I am AeroFlow's assistant. You can ask me about passenger numbers, critical flights, or counter capacity at AIGE airport!"
+                reponse_bot = "I am AeroFlow's operational assistant. You can ask me about passenger numbers, critical flights, counter capacity, or flight schedules at AIGE!"
             else:
-                reponse_bot = "Je suis l'assistant d'AeroFlow. Vous pouvez m'interroger sur le nombre de passagers, les vols critiques ou la capacité des guichets à l'AIGE !"
+                reponse_bot = "Je suis l'assistant opérationnel d'AeroFlow. Vous pouvez m'interroger sur le nombre de passagers, les vols critiques, la capacité des guichets ou l'état du trafic à l'AIGE !"
 
         st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
         with st.chat_message("assistant"):
