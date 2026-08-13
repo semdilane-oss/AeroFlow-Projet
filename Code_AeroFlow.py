@@ -89,9 +89,7 @@ if st.session_state["theme_sombre"]:
     alert_bg = "#2D1517"
     alert_text = "#FCA5A5"
     
-    # Bouton principal en vert
     btn_bg_gradient = "linear-gradient(135deg, #059669 0%, #047857 100%)"
-    # Bannière d'avertissement haut de page avec couleur d'avant (rouge d'origine)
     banner_bg = "#2D1517"
     banner_border = "#EF4444"
     banner_text = "#FCA5A5"
@@ -116,9 +114,7 @@ else:
     alert_bg = "#F0FDF4"
     alert_text = "#166534"
     
-    # Bouton principal en vert
     btn_bg_gradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
-    # Bannière d'avertissement haut de page avec couleur d'avant (rouge d'origine #FEE2E2 / bordure #EF4444 / texte #991B1B)
     banner_bg = "#FEE2E2"
     banner_border = "#EF4444"
     banner_text = "#991B1B"
