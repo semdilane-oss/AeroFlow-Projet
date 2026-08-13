@@ -6,10 +6,21 @@
 import glob
 import io
 import math
+import datetime
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from gtts import gTTS
+
+# Imports ReportLab pour la génération de rapports PDF
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 
 # ------------------------------------------------------------------------------
 # 1. CONFIGURATION DE LA PAGE & DESIGN PREMIUM LIGHT / AÉRO
@@ -154,6 +165,93 @@ def charger_et_nettoyer_donnees(source_fichier):
         )
 
     return df_temp
+
+
+def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guichets):
+    """Génère un rapport synthétique professionnel au format PDF."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    story = []
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontSize=20,
+        textColor=colors.HexColor('#0F172A'),
+        spaceAfter=6
+    )
+    subtitle_style = ParagraphStyle(
+        'DocSubtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#0284C7'),
+        spaceAfter=15
+    )
+    normal_bold = ParagraphStyle(
+        'NormalBold',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        textColor=colors.HexColor('#0F172A')
+    )
+
+    # En-tête
+    date_str = datetime.datetime.now().strftime("%d/%m/%Y à %H:%M")
+    story.append(Paragraph("✈️ AeroFlow — Control Center AIGE", title_style))
+    story.append(Paragraph(f"Aéroport International Gnassingbé Eyadéma (AIGE) | Rapport Opérationnel du {date_str}", subtitle_style))
+    story.append(Spacer(1, 10))
+
+    # Résumé KPI
+    nb_crit = len(df_critiques)
+    kpi_data = [
+        ["Passagers Attendus", "Flux Transit", "Guichets Ouverts", "Vols Critiques (≤45m)"],
+        [f"{total_pax:,} pax", f"{total_trans:,} pax", f"{guichets}", f"{nb_crit} vol(s)"]
+    ]
+    t_kpi = Table(kpi_data, colWidths=[130, 130, 130, 130])
+    t_kpi.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0284C7')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor('#F1F5F9')),
+        ('TEXTCOLOR', (0,1), (-1,1), colors.HexColor('#0F172A')),
+        ('FONTSIZE', (0,1), (-1,1), 11),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+        ('TOPPADDING', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+    ]))
+    story.append(t_kpi)
+    story.append(Spacer(1, 20))
+
+    # Section Vols Critiques
+    story.append(Paragraph("⚠️ Tableau des Vols Critiques et Correspondances Rapides", normal_bold))
+    story.append(Spacer(1, 8))
+
+    if not df_critiques.empty:
+        cols_a_garder = [c for c in ["Vol", "Compagnie", "Heure_Arrivee", "Passagers", "Passagers_Transit", "Temps_Escale_Min"] if c in df_critiques.columns]
+        crit_data = [cols_a_garder]
+        for _, r in df_critiques[cols_a_garder].iterrows():
+            crit_data.append([str(r[c]) for c in cols_a_garder])
+
+        t_crit = Table(crit_data, colWidths=[80, 120, 90, 80, 80, 90])
+        t_crit.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#DC2626')),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#FECACA')),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#FEF2F2')]),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('TOPPADDING', (0,0), (-1,-1), 6),
+        ]))
+        story.append(t_crit)
+    else:
+        story.append(Paragraph("✅ Aucun vol critique n'est signalé pour cette tranche d'exploitation.", styles['Normal']))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
 
 
 # ------------------------------------------------------------------------------
@@ -472,3 +570,52 @@ else:
 # ------------------------------------------------------------------------------
 with st.expander("📄 Voir le programme détaillé des vols (AIGE)"):
     st.dataframe(df, height=400, hide_index=True)
+
+# ------------------------------------------------------------------------------
+# 9. CENTRE D'EXPORTATION & RAPPORTS (CSV, EXCEL, PDF)
+# ------------------------------------------------------------------------------
+st.markdown("---")
+st.subheader("📥 Exportation & Rapports d'Exploitation")
+
+exp_col1, exp_col2, exp_col3 = st.columns(3)
+
+# 1. Export CSV des Vols Critiques Filtrés
+with exp_col1:
+    st.markdown("**1. Données des Vols Critiques (CSV)**")
+    if not vols_critiques.empty:
+        csv_critiques = vols_critiques.to_csv(index=False, encoding="utf-8-sig")
+        st.download_button(
+            label="📄 Télécharger Vols Critiques (.csv)",
+            data=csv_critiques,
+            file_name=f"vols_critiques_AIGE_{datetime.date.today()}.csv",
+            mime="text/csv",
+        )
+    else:
+        st.info("Aucun vol critique à exporter.")
+
+# 2. Export CSV du Programme Complet
+with exp_col2:
+    st.markdown("**2. Programme Complet des Vols (CSV)**")
+    csv_complet = df.to_csv(index=False, encoding="utf-8-sig")
+    st.download_button(
+        label="📊 Télécharger Programme Complet (.csv)",
+        data=csv_complet,
+        file_name=f"programme_vols_AIGE_{datetime.date.today()}.csv",
+        mime="text/csv",
+    )
+
+# 3. Export Rapport Officiel PDF
+with exp_col3:
+    st.markdown("**3. Rapport Synthétique Officiel (PDF)**")
+    if REPORTLAB_AVAILABLE:
+        pdf_bytes = generer_pdf_rapport(
+            df, vols_critiques, total_passagers, total_transit, guichets_ouverts
+        )
+        st.download_button(
+            label="📑 Télécharger le Rapport (.pdf)",
+            data=pdf_bytes,
+            file_name=f"Rapport_Exploitation_AIGE_{datetime.date.today()}.pdf",
+            mime="application/pdf",
+        )
+    else:
+        st.warning("Module ReportLab indisponible. Ajoutez `reportlab` à votre environnement pour débloquer l'export PDF.")
