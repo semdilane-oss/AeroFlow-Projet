@@ -581,7 +581,7 @@ if st.session_state["user_role"] == "passager":
         )
 
     with col_input_pax:
-        prompt_saisi_pax = st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
+        prompt_saisi_pax = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_pax")
 
     prompt_pax = texte_vocal_pax if texte_vocal_pax else prompt_saisi_pax
 
@@ -786,7 +786,7 @@ elif st.session_state["user_role"] == "agent":
             st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
 
     # --------------------------------------------------------------------------
-    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AVEC MICRO CÔTE À CÔTE)
+    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AGENT)
     # --------------------------------------------------------------------------
     st.markdown("---")
     st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Bilingue)", "💬 AeroFlow Virtual Assistant (Bilingual Chatbot)"))
@@ -801,7 +801,6 @@ elif st.session_state["user_role"] == "agent":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Disposition intégrée (Zone de texte + Bouton micro côte à côte pour l'agent)
     col_input_agent, col_mic_agent = st.columns([12, 1])
 
     with col_mic_agent:
@@ -814,7 +813,7 @@ elif st.session_state["user_role"] == "agent":
         )
 
     with col_input_agent:
-        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."))
+        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_agent")
 
     prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else prompt_saisi_agent
 
