@@ -619,3 +619,52 @@ with exp_col3:
         )
     else:
         st.warning("Module ReportLab indisponible. Ajoutez `reportlab` à votre environnement pour débloquer l'export PDF.")
+# ------------------------------------------------------------------------------
+# 10. ASSISTANT VIRTUEL D'EXPLOITATION (CHATBOT AIGE)
+# ------------------------------------------------------------------------------
+st.markdown("---")
+st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
+
+# Initialisation de l'historique de discussion
+if "messages_chat" not in st.session_state:
+    st.session_state["messages_chat"] = [
+        {"role": "assistant", "content": "Bonjour ! Je suis AeroBot, l'assistant d'exploitation de l'AIGE. Posez-moi une question sur le flux des passagers, les guichets ou les vols critiques."}
+    ]
+
+# Affichage des anciens messages
+for msg in st.session_state["messages_chat"]:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+# Zone de saisie utilisateur
+if prompt := st.chat_input("Posez votre question (ex: Quels sont les vols critiques ?, Combien de guichets ?)..."):
+    # Enregistrer le message de l'utilisateur
+    st.session_state["messages_chat"].append({"role": "user", "content": prompt})
+    st.chat_message("user").write(prompt)
+
+    # Logique de réponse basée sur les données réelles du tableau
+    question = prompt.lower()
+    reponse = ""
+
+    if "critique" in question or "risque" in question or "alerte" in question:
+        if not vols_critiques.empty:
+            nb = len(vols_critiques)
+            pax_t = int(vols_critiques["Passagers_Transit"].sum())
+            reponse = f"⚠️ Nous avons **{nb} vol(s) critique(s)** (escale ≤ 45 min) représentant **{pax_t} passagers en transit rapide**.\n\n"
+            for _, v in vols_critiques.iterrows():
+                reponse += f"- **Vol {v.get('Vol')}** ({v.get('Compagnie')}) : Arrivée à {v.get('Heure_Arrivee')}, Escale : {v.get('Temps_Escale_Min')} min.\n"
+        else:
+            reponse = "🟢 Aucun vol critique n'est à signaler pour le moment. La situation est sous contrôle !"
+
+    elif "guichet" in question or "agent" in question or "capacit" in question:
+        reponse = f"💡 **Recommandation Guichets :** Actuellement, vous avez **{guichets_ouverts} guichet(s) ouvert(s)** sur le terrain.\n\n"
+        reponse += f"Pour absorber la pointe de trafic maximale avec la capacité moyenne estimée ({capacite_agent_heure} pax/h/agent), il est conseillé d'ouvrir au moins **{guichets_recommandes} guichets**."
+
+    elif "passager" in question or "flux" in question or "total" in question:
+        reponse = f"📊 **Bilan du trafic du jour :**\n- Passagers totaux attendus : **{total_passagers:,} pax**\n- Dont passagers en transit : **{total_transit:,} pax**"
+
+    else:
+        reponse = "🤖 Je peux vous informer sur : les **vols critiques**, la **recommandation de guichets**, ou le **total des passagers attendus**. Que souhaitez-vous savoir ?"
+
+    # Afficher et enregistrer la réponse du bot
+    st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
+    st.chat_message("assistant").write(reponse)
