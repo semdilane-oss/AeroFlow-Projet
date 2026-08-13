@@ -52,7 +52,7 @@ if "messages_chat_pax" not in st.session_state:
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = []
 
-# Identifiants STRICTS des agents ANAC / PC Sécurité (Mots de passe >= 6 caractères)
+# Identifiants STRICTS des agents ANAC / PC Sécurité
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
     "agent_p2": "lome2026"
@@ -65,13 +65,11 @@ AGENT_CREDENTIALS = {
 with st.sidebar:
     st.title("⚙️ Configuration")
     
-    # Sélecteur de langue global avec une clé unique pour éviter le DuplicateElementId
     langue_interface = st.selectbox("🌐 Langue / Language", ["Français", "English"], key="select_langue_global")
     
     mode_nuit = st.toggle("🌙 Mode Nuit (Sombre)", value=st.session_state["theme_sombre"])
     st.session_state["theme_sombre"] = mode_nuit
 
-# Fonction de traduction rapide (i18n)
 def t(texte_fr, texte_en):
     return texte_fr if langue_interface == "Français" else texte_en
 
@@ -120,33 +118,13 @@ else:
     success_text = "#166534"
     alert_bg = "#FEF2F2"
     alert_text = "#991B1B"
-    
-    btn_bg_gradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
-    banner_bg = "#FEE2E2"
-    banner_border = "#EF4444"
-    banner_text = "#991B1B"
 
 st.markdown(
     f"""
 <style>
     .stApp {{ background-color: {bg_app} !important; color: {text_main} !important; }}
-    
     .header-title {{ font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: {title_color}; }}
     .header-subtitle {{ color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
-    
-    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
-        color: {text_main} !important;
-        font-weight: 700 !important;
-        font-size: 1.1rem !important;
-    }}
-    .stTabs [data-baseweb="tab-list"] button {{
-        background-color: {card_bg} !important;
-        border: 1px solid {border_color} !important;
-        border-radius: 8px 8px 0 0 !important;
-        margin-right: 4px;
-    }}
-    .stTabs [data-baseweb="tab"] {{ height: 50px; white-space: pre-wrap; }}
-
     .kpi-container {{
         background-color: {card_bg}; border: 1px solid {border_color}; border-radius: 12px;
         padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
@@ -155,81 +133,30 @@ st.markdown(
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#475569'}; text-transform: uppercase; }}
     .kpi-val {{ font-size: 1.8rem; font-weight: 800; color: {title_color}; margin-top: 4px; }}
     
-    div[data-testid="stRadio"] label, div[data-testid="stRadio"] p,
-    .stTextInput label, .stSelectbox label, .stCheckbox label {{
-        color: {text_main} !important;
-        font-weight: 600 !important;
-    }}
-    
     div.stButton > button, div[data-testid="stFormSubmitButton"] > button {{
-        background: {btn_bg_gradient} !important;
-        color: #FFFFFF !important; 
-        font-weight: 700 !important; 
-        border-radius: 8px !important;
-        border: none !important; 
-        padding: 10px 20px !important; 
-        width: 100%;
+        background: {btn_bg_gradient} !important; color: #FFFFFF !important; font-weight: 700 !important; 
+        border-radius: 8px !important; border: none !important; padding: 10px 20px !important; width: 100%;
     }}
-    
     div[data-testid="stChatMessage"] {{
-        background-color: {chat_bg} !important;
-        border-radius: 8px !important;
-        padding: 8px 14px !important;
-        margin-bottom: 10px !important;
-        border: none !important;
+        background-color: {chat_bg} !important; border-radius: 8px !important; padding: 8px 14px !important; margin-bottom: 10px !important;
     }}
-
     div[data-testid="stChatMessage"] div[data-testid="stChatMessageAvatar"] {{
-        background-color: {avatar_bg} !important;
-        border-radius: 8px !important;
-        color: #FFFFFF !important;
+        background-color: {avatar_bg} !important; border-radius: 8px !important; color: #FFFFFF !important;
     }}
-
-    div[data-testid="stChatMessage"] p, 
-    div[data-testid="stChatMessageContent"] p,
-    div[data-testid="stChatMessageContent"] {{
-        color: {chat_text} !important;
-        font-weight: 600 !important;
-        font-size: 1.05rem !important;
+    div[data-testid="stChatMessage"] p, div[data-testid="stChatMessageContent"] p, div[data-testid="stChatMessageContent"] {{
+        color: {chat_text} !important; font-weight: 600 !important; font-size: 1.05rem !important;
     }}
-
     div[data-testid="stForm"] {{
-        background-color: {card_bg} !important;
-        border: 1px solid {border_color} !important;
-        border-radius: 16px !important;
-        padding: 20px !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+        background-color: {card_bg} !important; border: 1px solid {border_color} !important; border-radius: 16px !important; padding: 20px !important;
     }}
-    
     div[data-testid="stForm"] input, .stTextInput input {{
-        color: {input_text_color} !important;
-        -webkit-text-fill-color: {input_text_color} !important;
-        background-color: {input_box_bg} !important;
-        font-weight: 600 !important;
-        border: 1px solid {border_color} !important;
+        color: {input_text_color} !important; -webkit-text-fill-color: {input_text_color} !important; background-color: {input_box_bg} !important; font-weight: 600 !important; border: 1px solid {border_color} !important;
     }}
-
-    div[data-testid="stForm"] input::placeholder, .stTextInput input::placeholder {{
-        color: {placeholder_color} !important;
-        -webkit-text-fill-color: {placeholder_color} !important;
-        opacity: 1 !important;
-    }}
-
     div[data-testid="stChatInput"] textarea {{
-        color: {input_text_color} !important;
-        -webkit-text-fill-color: {input_text_color} !important;
-        background-color: {input_box_bg} !important;
-        font-weight: 600 !important;
-    }}
-    div[data-testid="stChatInput"] textarea::placeholder {{
-        color: {placeholder_color} !important;
-        -webkit-text-fill-color: {placeholder_color} !important;
-        opacity: 1 !important;
+        color: {input_text_color} !important; -webkit-text-fill-color: {input_text_color} !important; background-color: {input_box_bg} !important; font-weight: 600 !important;
     }}
     div[data-testid="stChatInput"] {{
-        background-color: {input_box_bg} !important;
-        border: 1px solid #EF4444 !important;
-        border-radius: 12px !important;
+        background-color: {input_box_bg} !important; border: 1px solid #0284C7 !important; border-radius: 12px !important;
     }}
 </style>
 """,
@@ -247,7 +174,6 @@ def calculer_capacite_dynamique(df_vols):
     capacites = []
     for _, row in df_vols.iterrows():
         compagnie = str(row.get("Compagnie", "")).upper()
-
         if any(c in compagnie for c in ["ASKY", "CEIBA", "AIR COTE", "OVERLAND", "AIR PEACE"]):
             cap_base = 50.0
         elif any(c in compagnie for c in ["AIR FRANCE", "TURKISH", "BRUSSELS", "ROYAL AIR MAROC"]):
@@ -260,7 +186,6 @@ def calculer_capacite_dynamique(df_vols):
         taux_t = row.get("Taux_Transit", 0.2)
         if taux_t > 0.35:
             cap_base += 5.0
-
         capacites.append(cap_base)
 
     df_vols["Capacite_Estimee"] = capacites
@@ -278,7 +203,6 @@ def charger_et_nettoyer_donnees(source_fichier):
         contenu_octets = contenu_octets[3:]
 
     contenu_texte = contenu_octets.decode("utf-8", errors="ignore")
-
     premiere_ligne = contenu_texte.splitlines()[0] if contenu_texte else ""
     separateur = ","
     if premiere_ligne.count(";") > premiere_ligne.count(","):
@@ -291,9 +215,6 @@ def charger_et_nettoyer_donnees(source_fichier):
 
     if "Compagnie" in df_temp.columns:
         df_temp["Compagnie"] = df_temp["Compagnie"].astype(str)
-        df_temp["Compagnie"] = df_temp["Compagnie"].str.replace(
-            r"Air C[ÃâÂ]te d['’]Ivoire", "Air Cote d'Ivoire", regex=True
-        )
 
     for col in ["Passagers", "Temps_Escale_Min"]:
         if col in df_temp.columns:
@@ -317,12 +238,8 @@ def charger_et_nettoyer_donnees(source_fichier):
         df_temp["Taux_Transit"] = pd.to_numeric(df_temp["Taux_Transit"], errors="coerce").fillna(0.25)
 
     if "Passagers" in df_temp.columns:
-        df_temp["Passagers_Transit"] = (
-            (df_temp["Passagers"] * df_temp["Taux_Transit"]).fillna(0).round().astype(int)
-        )
-        df_temp["Passagers_Terminus"] = (
-            df_temp["Passagers"] - df_temp["Passagers_Transit"]
-        )
+        df_temp["Passagers_Transit"] = ((df_temp["Passagers"] * df_temp["Taux_Transit"]).fillna(0).round().astype(int))
+        df_temp["Passagers_Terminus"] = (df_temp["Passagers"] - df_temp["Passagers_Transit"])
 
     if "Heure_Arrivee" in df_temp.columns:
         df_temp["Tranche_Horaire"] = (
@@ -341,15 +258,9 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
     story = []
     
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'DocTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor('#0F172A'), spaceAfter=6
-    )
-    subtitle_style = ParagraphStyle(
-        'DocSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#0284C7'), spaceAfter=15
-    )
-    normal_bold = ParagraphStyle(
-        'NormalBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, textColor=colors.HexColor('#0F172A')
-    )
+    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor('#0F172A'), spaceAfter=6)
+    subtitle_style = ParagraphStyle('DocSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#0284C7'), spaceAfter=15)
+    normal_bold = ParagraphStyle('NormalBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, textColor=colors.HexColor('#0F172A'))
 
     date_str = datetime.datetime.now().strftime("%d/%m/%Y à %H:%M")
     story.append(Paragraph("✈️ AeroFlow — Control Center AIGE", title_style))
@@ -404,6 +315,16 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
     doc.build(story)
     buffer.seek(0)
     return buffer.getvalue()
+
+
+# Chargement par défaut des données CSV si disponibles dans le dossier pour alimenter les deux espaces
+if "df_vols" not in st.session_state:
+    fichiers_csv_locaux = glob.glob("*.csv")
+    if fichiers_csv_locaux:
+        try:
+            st.session_state["df_vols"] = charger_et_nettoyer_donnees(fichiers_csv_locaux[0])
+        except Exception:
+            pass
 
 
 # ------------------------------------------------------------------------------
@@ -473,7 +394,7 @@ if st.session_state["user_role"] is None:
                         st.error(t("Identifiant ou mot de passe incorrect.", "Incorrect ID or password."))
 
         else:  
-            st.warning(t("🔄 Réinitialisation de votre mot de passe voyageur (6 caractères minimum)", "🔄 Reset your traveler password (minimum 6 characters)"))
+            st.warning(t("🔄 Réinitialisation de votre mot de passe voyageur", "🔄 Reset your traveler password"))
             with st.form("form_oubli_pax"):
                 pax_id_reset = st.text_input(t("Votre Numéro de Vol ou Email enregistré", "Your registered Flight Number or Email"))
                 pax_nouveau_pass = st.text_input(t("Nouveau mot de passe (min. 6 caractères)", "New password (min. 6 chars)"), type=input_type_pax)
@@ -483,14 +404,14 @@ if st.session_state["user_role"] is None:
                     if pax_id_reset not in st.session_state["db_passagers"]:
                         st.error(t("Cet identifiant n'est associé à aucun compte enregistré.", "This ID is not associated with any registered account."))
                     elif len(pax_nouveau_pass) < 6:
-                        st.error(t("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.", "⚠️ The new password must contain at least 6 characters."))
+                        st.error(t("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.", "⚠️ Password must contain at least 6 characters."))
                     else:
                         st.session_state["db_passagers"][pax_id_reset] = pax_nouveau_pass
                         st.success(t("Mot de passe modifié avec succès ! Vous pouvez vous connecter.", "Password updated successfully! You can now log in."))
 
     with tab_agent:
         st.subheader(t("Portail Opérationnel — Aérodrome International Gnassingbé Eyadéma", "Operational Portal — Gnassingbé Eyadéma International Aerodrome"))
-        st.markdown(f'<div style="background-color: {banner_bg}; color: {banner_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid {banner_border};">⚠️ {t("Zone protégée réservée aux agents habilités de l\'ANAC. Les identifiants sont strictement contrôlés.", "Protected area reserved for authorized ANAC agents. Credentials are strictly controlled.")}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background-color: {banner_bg}; color: {banner_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid {banner_border};">⚠️ {t("Zone protégée réservée aux agents habilités de l\'ANAC.", "Protected area reserved for authorized ANAC agents.")}</div>', unsafe_allow_html=True)
 
         afficher_mdp_agent = st.checkbox(t("👁️ Afficher les caractères en clair", "👁️ Show plain text characters"), key="chk_agent_visible")
         input_type_agent = "default" if afficher_mdp_agent else "password"
@@ -512,7 +433,6 @@ if st.session_state["user_role"] is None:
                         st.error(t("⚠️ Accès refusé. Identifiant ou mot de passe agent invalide.", "⚠️ Access denied. Invalid agent ID or password."))
         else:
             with st.form("form_reset_agent"):
-                st.info(t("Modifiez votre mot de passe agent (6 caractères minimum requis).", "Update your agent password (minimum 6 characters required)."))
                 agent_user_r = st.text_input(t("Identifiant Agent officiel", "Official Agent ID"))
                 ancien_p = st.text_input(t("Ancien mot de passe", "Old password"), type=input_type_agent)
                 nouveau_p = st.text_input(t("Nouveau mot de passe (min. 6 caractères)", "New password (min. 6 chars)"), type=input_type_agent)
@@ -522,7 +442,7 @@ if st.session_state["user_role"] is None:
                     if agent_user_r not in AGENT_CREDENTIALS or AGENT_CREDENTIALS[agent_user_r] != ancien_p:
                         st.error(t("Identifiant ou ancien mot de passe incorrect.", "Incorrect ID or old password."))
                     elif len(nouveau_p) < 6:
-                        st.error(t("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.", "⚠️ The new password must contain at least 6 characters."))
+                        st.error(t("⚠️ Le nouveau mot de passe doit contenir au moins 6 caractères.", "⚠️ Password must contain at least 6 characters."))
                     else:
                         AGENT_CREDENTIALS[agent_user_r] = nouveau_p
                         st.success(t("Mot de passe agent mis à jour avec succès !", "Agent password successfully updated!"))
@@ -531,18 +451,30 @@ if st.session_state["user_role"] is None:
 
 
 # ------------------------------------------------------------------------------
-# 5. VUE ESPACE PASSAGER
+# 5. VUE ESPACE PASSAGER (AVEC CHATBOT ULTRA-INTELLIGENT CONNECTÉ AUX VOLS)
 # ------------------------------------------------------------------------------
 
 if st.session_state["user_role"] == "passager":
     st.sidebar.title(t("👤 Espace Voyageur", "👤 Traveler Area"))
     st.sidebar.write(f"{t('Passager connecté :', 'Logged-in passenger:')} **{st.session_state['current_user']}**")
+    
+    # Permettre aux passagers de charger ou vérifier les vols si besoin
+    st.sidebar.markdown("---")
+    st.sidebar.subheader(t("📂 Info Vols AIGE", "📂 AIGE Flight Info"))
+    f_pax = st.sidebar.file_uploader(t("Mettre à jour le planning (CSV)", "Update flight schedule (CSV)"), type=["csv"], key="upload_pax_csv")
+    if f_pax is not None:
+        try:
+            st.session_state["df_vols"] = charger_et_nettoyer_donnees(f_pax)
+            st.sidebar.success(t("Planning des vols mis à jour !", "Flight schedule updated!"))
+        except Exception as e:
+            st.sidebar.error(f"Erreur : {e}")
+
     if st.sidebar.button(t("Déconnexion", "Sign Out")):
         st.session_state["user_role"] = None
         st.rerun()
 
     st.markdown(f'<div class="header-title">{t("✈️ Votre Espace Voyage — AIGE Lomé", "✈️ Your Travel Space — AIGE Lomé")}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="background-color: {success_bg}; color: {success_text}; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 20px;">{t("Bienvenue ! Retrouvez ici les informations de vol et services utiles.", "Welcome! Find your flight information and useful services here.")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background-color: {success_bg}; color: {success_text}; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom: 20px;">{t("Bienvenue ! Consultez ci-dessous vos informations et posez toutes vos questions à notre assistant intelligent.", "Welcome! Check your information below and ask any questions to our intelligent assistant.")}</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -554,14 +486,16 @@ if st.session_state["user_role"] == "passager":
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f'<div class="kpi-container"><div class="kpi-label">{t("Livraison Bagages", "Baggage Claim")}</div><div class="kpi-val">{t("Tapis 1", "Belt 1")}</div></div>', unsafe_allow_html=True)
 
-    # Chatbot intégré pour l'espace passager
+    # --------------------------------------------------------------------------
+    # CHATBOT INTELLIGENT POUR LE PASSAGER (CONNECTÉ AUX DONNÉES DE VOLS RÉELLES)
+    # --------------------------------------------------------------------------
     st.markdown("---")
-    st.subheader(t("💬 Assistant Virtuel AeroFlow", "💬 AeroFlow Virtual Assistant"))
-    st.markdown(t("Posez vos questions concernant votre vol, l'embarquement ou les services de l'AIGE (par écrit ou par la voix).", "Ask your questions regarding your flight, boarding, or AIGE services (by text or voice)."))
+    st.subheader(t("💬 Assistant Virtuel Intelligent AeroFlow", "💬 AeroFlow Intelligent Virtual Assistant"))
+    st.markdown(t("Posez n'importe quelle question sur les vols disponibles, l'heure de départ, le temps restant en direct, les portes d'embarquement ou les services de l'AIGE.", "Ask any question about available flights, departure times, live remaining time, boarding gates, or AIGE services."))
 
     if not st.session_state["messages_chat_pax"]:
         st.session_state["messages_chat_pax"] = [
-            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant virtuel d'AeroFlow. Comment puis-je vous aider pour votre voyage aujourd'hui ?", "Hello! I am AeroFlow's virtual assistant. How can I help you with your trip today?")}
+            {"role": "assistant", "content": t("Bonjour ! Je suis l'assistant intelligent d'AeroFlow. Je peux vous lister tous les vols disponibles, vous donner leurs heures exactes de départ et calculer en temps réel le temps exact qu'il reste avant le départ de votre vol. Que souhaitez-vous savoir ?", "Hello! I am AeroFlow's intelligent assistant. I can list all available flights, give you their exact departure times, and calculate in real-time the exact time remaining before your flight departs. What would you like to know?")}
         ]
 
     for message in st.session_state["messages_chat_pax"]:
@@ -580,7 +514,7 @@ if st.session_state["user_role"] == "passager":
         )
 
     with col_input_pax:
-        prompt_saisi_pax = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_pax")
+        prompt_saisi_pax = st.chat_input(t("Ex: Liste des vols, heure de départ KP010, combien de temps reste-t-il...", "E.g. List flights, departure time KP010, how much time is left..."), key="chat_input_pax")
 
     prompt_pax = texte_vocal_pax if texte_vocal_pax else prompt_saisi_pax
 
@@ -588,22 +522,112 @@ if st.session_state["user_role"] == "passager":
         st.session_state["messages_chat_pax"].append({"role": "user", "content": prompt_pax})
 
         p_low = prompt_pax.lower()
-        est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help"]) or langue_interface == "English"
+        est_ang_pax = any(w in p_low for w in ["flight", "gate", "baggage", "status", "time", "where", "how", "help", "list", "remaining", "left", "departure"]) or langue_interface == "English"
+        
+        maintenant = datetime.datetime.now()
+        heure_actuelle_str = maintenant.strftime("%H:%M")
+        df_pax_vols = st.session_state.get("df_vols", pd.DataFrame())
 
-        if any(w in p_low for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
-            rep_pax = "Bonjour et bienvenue à l'Aéroport International Gnassingbé Eyadéma (AIGE) ! C'est un plaisir de vous accompagner. Comment puis-je vous aider concernant votre vol ou vos bagages aujourd'hui ?" if not est_ang_pax else "Hello and welcome to Gnassingbé Eyadéma International Airport (AIGE)! It's a pleasure to assist you. How can I help you with your flight or luggage today?"
-        elif any(w in p_low for w in ["merci", "thank"]):
-            rep_pax = "Je vous en prie ! C'est un réel plaisir de vous aider. N'hésitez pas si vous avez d'autres questions pour votre voyage. Bon vol !" if not est_ang_pax else "You're very welcome! It's a real pleasure to help. Feel free to ask if you have any other questions for your trip. Have a great flight!"
+        rep_pax = ""
+
+        # CAS 1 : LISTE DE TOUS LES VOLS DISPONIBLES
+        if any(w in p_low for w in ["liste", "tous", "vols", "disponible", "programme", "list", "all", "flights", "schedule"]):
+            if not df_pax_vols.empty:
+                l_vols = []
+                for _, r in df_pax_vols.iterrows():
+                    v_num = r.get("Vol", "N/A")
+                    v_comp = r.get("Compagnie", "N/A")
+                    v_arr = r.get("Heure_Arrivee", "N/A")
+                    v_esc = r.get("Temps_Escale_Min", 45)
+                    try:
+                        h_arr_dt = datetime.datetime.strptime(str(v_arr), "%H:%M").time()
+                        dt_dep = datetime.datetime.combine(datetime.date.today(), h_arr_dt) + datetime.timedelta(minutes=int(v_esc))
+                        v_dep_str = dt_dep.strftime("%H:%M")
+                    except:
+                        v_dep_str = "N/A"
+                    l_vols.append(f"- **Vol {v_num}** ({v_comp}) | Arrivée : **{v_arr}** | Départ prévu : **{v_dep_str}**")
+                
+                liste_str = "\n".join(l_vols)
+                if est_ang_pax:
+                    rep_pax = f"📋 **Here is the complete list of available flights at AIGE with their departure times:**\n\n{liste_str}\n\n*(You can ask for the remaining time of any specific flight by typing its number, e.g., 'KP010')*"
+                else:
+                    rep_pax = f"📋 **Voici la liste complète des vols disponibles aujourd'hui à l'AIGE avec leurs heures de départ :**\n\n{liste_str}\n\n*(Vous pouvez me demander le temps restant exact pour un vol particulier en tapant son numéro, ex: 'KP010')*"
+            else:
+                rep_pax = "⚠️ Aucun programme de vol n'est actuellement chargé dans le système par l'administration."
+
+        # CAS 2 : TEMPS RESTANT OU HEURE DE DÉPART D'UN VOL SPÉCIFIQUE OU GÉNÉRAL
+        elif any(w in p_low for w in ["temps", "restant", "reste", "combien", "heure", "depart", "part", "remaining", "left", "time", "when"]):
+            vol_trouve = None
+            for _, r in df_pax_vols.iterrows():
+                v_code = str(r.get("Vol", "")).upper()
+                if v_code and v_code in p_low.upper():
+                    vol_trouve = r
+                    break
+            
+            if vol_trouve is not None:
+                v_num = vol_trouve.get("Vol")
+                v_arr = str(vol_trouve.get("Heure_Arrivee", "12:00"))
+                v_esc = int(vol_trouve.get("Temps_Escale_Min", 45))
+                v_comp = vol_trouve.get("Compagnie")
+                
+                try:
+                    h_arr_dt = datetime.datetime.strptime(v_arr, "%H:%M").time()
+                    dt_arrivee_complet = datetime.datetime.combine(datetime.date.today(), h_arr_dt)
+                    dt_depart_complet = dt_arrivee_complet + datetime.timedelta(minutes=v_esc)
+                    
+                    delta = dt_depart_complet - maintenant
+                    minutes_restantes = int(delta.total_seconds() / 60)
+                    
+                    if minutes_restantes > 0:
+                        heures_r = minutes_restantes // 60
+                        mins_r = minutes_restantes % 60
+                        temps_str = f"{heures_r}h {mins_r}min" if heures_r > 0 else f"{mins_r} minutes"
+                    else:
+                        temps_str = "Vol déjà parti ou échéance dépassée"
+
+                    if est_ang_pax:
+                        rep_pax = f"⏱️ **Flight Details — {v_num} ({v_comp}):**\n- Arrival Time: **{v_arr}**\n- Layover / Stop duration: **{v_esc} min**\n- **Exact Departure Time:** **{dt_depart_complet.strftime('%H:%M')}**\n- **Time remaining until departure:** ⏳ **{temps_str}** (Current time: {heure_actuelle_str})"
+                    else:
+                        rep_pax = f"⏱️ **Informations Vol — {v_num} ({v_comp}) :**\n- Heure d'arrivée : **{v_arr}**\n- Temps d'escale : **{v_esc} min**\n- **Heure exacte de départ :** **{dt_depart_complet.strftime('%H:%M')}**\n- **Temps restant exact avant le départ :** ⏳ **{temps_str}** (Heure actuelle : {heure_actuelle_str})"
+                except Exception:
+                    rep_pax = f"Le vol {v_num} de la compagnie {v_comp} arrive à {v_arr}."
+            else:
+                # Si aucun vol spécifique n'est nommé, on liste le temps restant pour tous les vols en temps réel
+                if not df_pax_vols.empty:
+                    l_temps = []
+                    for _, r in df_pax_vols.iterrows():
+                        v_num = r.get("Vol")
+                        v_comp = r.get("Compagnie")
+                        v_arr = str(r.get("Heure_Arrivee", "12:00"))
+                        v_esc = int(r.get("Temps_Escale_Min", 45))
+                        try:
+                            h_arr_dt = datetime.datetime.strptime(v_arr, "%H:%M").time()
+                            dt_dep = datetime.datetime.combine(datetime.date.today(), h_arr_dt) + datetime.timedelta(minutes=v_esc)
+                            delta = dt_dep - maintenant
+                            m_rest = int(delta.total_seconds() / 60)
+                            statut_t = f"Reste **{m_rest} min**" if m_rest > 0 else "Départ imminent / Parti"
+                            l_temps.append(f"- **Vol {v_num}** ({v_comp}) | Départ : **{dt_dep.strftime('%H:%M')}** | ⏱️ {statut_t}")
+                        except:
+                            pass
+                    t_str = "\n".join(l_temps)
+                    if est_ang_pax:
+                        rep_pax = f"⏱️ **Live departure countdown for all flights (Current time: {heure_actuelle_str}):**\n\n{t_str}\n\n*(Tip: Type a specific flight number like 'KP010' for more details)*"
+                    else:
+                        rep_pax = f"⏱️ **Décompte en temps réel de tous les vols (Heure actuelle : {heure_actuelle_str}) :**\n\n{t_str}\n\n*(Astuce : Précisez un numéro de vol comme 'KP010' pour un focus immédiat)*"
+                else:
+                    rep_pax = "⚠️ Aucun vol n'est actuellement disponible dans la base de données."
+
+        # CAS 3 : PORTE D'EMBARQUEMENT / ENREGISTREMENT / BAGAGES
         elif any(w in p_low for w in ["porte", "gate", "embarquement", "boarding"]):
-            rep_pax = "Votre vol embarque actuellement depuis la **Porte 02**. Veillez à vous y présenter 30 minutes avant l'heure de départ." if not est_ang_pax else "Your flight is currently boarding from **Gate 02**. Please make sure to be there 30 minutes before departure time."
-        elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt", "valise", "perdu"]):
-            rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1**. En cas de bagage endommagé ou retardé, veuillez vous adresser immédiatement au comptoir de réclamation de votre compagnie dans le hall d'arrivée." if not est_ang_pax else "Your baggage claim is at **Belt 1**. In case of damaged or delayed luggage, please report immediately to your airline's claim desk in the arrival hall."
-        elif any(w in p_low for w in ["statut", "status", "heure", "time", "retard", "delay", "depart", "arrivee"]):
-            rep_pax = "Votre vol est actuellement affiché **À l'heure 🟢**. Les enregistrements ouvrent 3 heures avant le départ pour les vols internationaux et 2 heures pour les vols régionaux." if not est_ang_pax else "Your flight is currently displayed as **On Time 🟢**. Check-in counters open 3 hours before departure for international flights and 2 hours for regional flights."
-        elif any(w in p_low for w in ["douane", "police", "securite", "security", "passport", "passeport", "visa"]):
-            rep_pax = "Pour le passage de la sécurité et de la police des frontières à l'AIGE, veuillez préparer votre carte d'embarquement ainsi que votre passeport ou pièce d'identité en cours de validité." if not est_ang_pax else "For security and border control at AIGE, please have your boarding card and valid passport or ID ready."
+            rep_pax = "Votre vol embarque depuis la **Porte 02**. Présentez-vous en zone d'embarquement 30 minutes avant le départ." if not est_ang_pax else "Your flight is boarding from **Gate 02**. Please arrive at the boarding area 30 minutes before departure."
+        elif any(w in p_low for w in ["bagage", "baggage", "tapis", "belt", "valise"]):
+            rep_pax = "La livraison de vos bagages s'effectue sur le **Tapis 1** dans le hall des arrivées de l'AIGE." if not est_ang_pax else "Your baggage claim is at **Belt 1** in the AIGE arrival hall."
+        elif any(w in p_low for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey"]):
+            rep_pax = "Bonjour et bienvenue à l'Aéroport International Gnassingbé Eyadéma (AIGE) ! Je suis prêt à vous donner toutes les informations sur les vols, les heures de départ et le temps restant en direct." if not est_ang_pax else "Hello and welcome to Gnassingbé Eyadéma International Airport (AIGE)! I am ready to provide all flight info, departure times, and live remaining time."
+        elif any(w in p_low for w in ["merci", "thank"]):
+            rep_pax = "Je vous en prie ! Bon voyage avec AeroFlow." if not est_ang_pax else "You're very welcome! Have a great trip with AeroFlow."
         else:
-            rep_pax = "Je suis l'assistant AeroFlow. Je peux vous renseigner sur votre porte d'embarquement, le statut des vols, les consignes bagages, les horaires d'enregistrement ou le passage des douanes à l'AIGE !" if not est_ang_pax else "I am the AeroFlow assistant. I can guide you regarding your boarding gate, flight status, baggage rules, check-in schedules, or customs at AIGE!"
+            rep_pax = "Je suis l'assistant voyageur d'AeroFlow. Vous pouvez me demander :\n1. **« Liste tous les vols »** pour voir tous les départs.\n2. **« Temps restant pour le vol [Numéro] »** pour connaître l'heure exacte de départ et le décompte en direct.\n3. **« Porte d'embarquement »** ou **« Bagages »**." if not est_ang_pax else "I am AeroFlow's traveler assistant. You can ask me to list all flights, check departure times and live countdowns, or ask about gates and baggage."
 
         st.session_state["messages_chat_pax"].append({"role": "assistant", "content": rep_pax})
         st.rerun()
@@ -624,7 +648,7 @@ elif st.session_state["user_role"] == "agent":
 
         st.markdown("---")
         st.subheader(t("📂 Données de vol", "📂 Flight Data"))
-        fichier_importe = st.file_uploader(t("Charger le programme des vols (CSV)", "Upload flight schedule (CSV)"), type=["csv"])
+        fichier_importe = st.file_uploader(t("Charger le programme des vols (CSV)", "Upload flight schedule (CSV)"), type=["csv"], key="upload_agent_csv")
 
         csv_modele_exemple = "Vol,Compagnie,Heure_Arrivee,Passagers,Temps_Escale_Min,Taux_Transit\nKP010,ASKY,11:30,120,40,0.45\nAF850,Air France,14:15,280,90,0.15\nET901,Ethiopian Airlines,16:45,190,35,0.30"
         st.download_button(
@@ -642,18 +666,8 @@ elif st.session_state["user_role"] == "agent":
                 st.error(f"{t('Erreur de lecture :', 'Reading error:')} {e}")
 
         if "df_vols" not in st.session_state:
-            fichiers_csv_locaux = glob.glob("*.csv")
-            if fichiers_csv_locaux:
-                fichier_trouve = fichiers_csv_locaux[0]
-                try:
-                    st.session_state["df_vols"] = charger_et_nettoyer_donnees(fichier_trouve)
-                    st.info(f"{t('Source détectée :', 'Detected source:')} {fichier_trouve}")
-                except Exception as e:
-                    st.error(f"{t('Erreur lors de la lecture de', 'Error reading')} {fichier_trouve} : {e}")
-                    st.stop()
-            else:
-                st.error(t("⚠️ Aucun fichier CSV trouvé dans le dépôt GitHub.", "⚠️ No CSV file found in the GitHub repository."))
-                st.stop()
+            st.error(t("⚠️ Aucun fichier CSV chargé. Veuillez charger un fichier CSV.", "⚠️ No CSV file loaded. Please upload a CSV file."))
+            st.stop()
 
         df = st.session_state["df_vols"]
 
@@ -681,6 +695,7 @@ elif st.session_state["user_role"] == "agent":
     st.markdown(f'<div class="header-title">{t("✈️ AeroFlow — Operations Control Center", "✈️ AeroFlow — Operations Control Center")}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="header-subtitle">{t("Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & Régulation", "Gnassingbé Eyadéma International Airport (AIGE) | Security PC & Regulation")}</div>', unsafe_allow_html=True)
 
+    df = st.session_state["df_vols"]
     vols_critiques = df[df["Temps_Escale_Min"] <= 45] if "Temps_Escale_Min" in df.columns else pd.DataFrame()
 
     c1, c2, c3, c4 = st.columns(4)
@@ -785,10 +800,10 @@ elif st.session_state["user_role"] == "agent":
         if REPORTLAB_AVAILABLE:
             st.download_button(label=t("📑 Télécharger le Rapport (.pdf)", "📑 Download Report (.pdf)"), data=generer_pdf_rapport(df, vols_critiques, total_passagers, total_transit, guichets_ouverts), file_name=f"Rapport_Exploitation_AIGE_{datetime.date.today()}.pdf", mime="application/pdf")
         else:
-            st.warning(f"⚠️ Module ReportLab non disponible pour l'export PDF.")
+            st.warning(f"⚠️ Module ReportLab non disponible.")
 
     # --------------------------------------------------------------------------
-    # 7. SECTION CHATBOT INTELLIGENT BILINGUE INTÉGRÉ (AGENT) - ULTRA COMPLET
+    # 7. SECTION CHATBOT AGENT (EXPERT)
     # --------------------------------------------------------------------------
     st.markdown("---")
     st.subheader(t("💬 Assistant Virtuel AeroFlow (Chatbot Expert — Trafic & Régulation)", "💬 AeroFlow Virtual Assistant (Expert Chatbot — Traffic & Regulation)"))
@@ -796,7 +811,7 @@ elif st.session_state["user_role"] == "agent":
 
     if not st.session_state["messages_chat"]:
         st.session_state["messages_chat"] = [
-            {"role": "assistant", "content": t("Bonjour l'expert ! Je suis votre assistant opérationnel AeroFlow. Je peux lister tous les vols de la journée, calculer le temps restant avant le départ en temps réel, analyser les situations critiques et vous fournir des solutions immédiates (ouverture de guichets prioritaires, escortes passagers, fast-track douanes). Que souhaitez-vous savoir ?", "Hello expert! I am your AeroFlow operational assistant. I can list all daily flights, calculate the time remaining before departure in real-time, analyze critical situations, and provide immediate solutions (opening priority counters, passenger escorts, custom fast-tracks). What would you like to know?")}
+            {"role": "assistant", "content": t("Bonjour l'expert ! Je suis votre assistant opérationnel AeroFlow. Je peux lister tous les vols de la journée, calculer le temps restant avant le départ en temps réel, analyser les situations critiques et vous fournir des solutions immédiates. Que souhaitez-vous savoir ?", "Hello expert! I am your AeroFlow operational assistant. I can list all daily flights, calculate the time remaining before departure in real-time, analyze critical situations, and provide immediate solutions. What would you like to know?")}
         ]
 
     for message in st.session_state["messages_chat"]:
@@ -815,7 +830,7 @@ elif st.session_state["user_role"] == "agent":
         )
 
     with col_input_agent:
-        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici (ex: liste des vols, temps restant vol KP010, combien de guichets ouvrir...)", "Type your question here (e.g. flight list, remaining time flight KP010, how many counters to open...)"), key="chat_input_agent")
+        prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_agent")
 
     prompt_utilisateur = texte_vocal_agent if texte_vocal_agent else prompt_saisi_agent
 
@@ -825,19 +840,10 @@ elif st.session_state["user_role"] == "agent":
         p_lower = prompt_utilisateur.lower()
         est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help", "list", "time", "remaining", "solution", "counters"]) or langue_interface == "English"
 
-        maintenant = datetime.datetime.now()
-        heure_actuelle_str = maintenant.strftime("%H:%M")
-
         reponse_bot = ""
 
-        # 0. QUESTION SUR LE NOMBRE DE GUICHETS À OUVRIR (BRANCHÉ AU CALCUL DYNAMIQUE)
         if any(w in p_lower for w in ["guichet", "guichets", "ouvrir", "combien", "counters", "open", "how many"]):
-            if est_anglais:
-                reponse_bot = f"🧮 **Counter Recommendation Analysis:**\nBased on peak passenger traffic and dynamic agent capacity ({capacite_agent_heure} pax/h/agent), you must open **at least {guichets_recommandes} counters** to efficiently handle the peak. Currently, you have **{guichets_ouverts} counters** open on site."
-            else:
-                reponse_bot = f"🧮 **Analyse et Recommandation des Guichets :**\nEn fonction du pic d'affluence des passagers et de la capacité dynamique estimée ({capacite_agent_heure} pax/h/agent), vous devez ouvrir **au minimum {guichets_recommandes} guichets** pour absorber la pointe sans engorgement. Actuellement, vous avez configuré **{guichets_ouverts} guichets** ouverts sur le terrain."
-
-        # 1. LISTE DES VOLS DE LA JOURNÉE
+            reponse_bot = f"🧮 **Analyse et Recommandation des Guichets :**\nEn fonction du pic d'affluence et de la capacité dynamique estimée ({capacite_agent_heure} pax/h/agent), vous devez ouvrir **au minimum {guichets_recommandes} guichets** pour absorber la pointe. Actuellement, vous avez configuré **{guichets_ouverts} guichets** ouverts sur le terrain."
         elif any(w in p_lower for w in ["liste", "vol", "vols", "journee", "programme", "tous", "flight", "schedule", "all"]):
             if not df.empty:
                 l_vols = []
@@ -848,16 +854,9 @@ elif st.session_state["user_role"] == "agent":
                     v_pax = r.get("Passagers", 0)
                     v_esc = r.get("Temps_Escale_Min", "N/A")
                     l_vols.append(f"- **Vol {v_num}** ({v_comp}) | Arrivée : **{v_arr}** | Passagers : **{v_pax} pax** | Escale : **{v_esc} min**")
-                
-                liste_str = "\n".join(l_vols)
-                if est_anglais:
-                    reponse_bot = f"📋 **Complete Daily Flight Schedule at AIGE:**\n\n{liste_str}\n\n*All movements are synchronized with the control center.*"
-                else:
-                    reponse_bot = f"📋 **Programme complet des vols de la journée à l'AIGE :**\n\n{liste_str}\n\n*Tous les mouvements sont synchronisés en temps réel avec le PC Sécurité.*"
+                reponse_bot = f"📋 **Programme complet des vols de la journée à l'AIGE :**\n\n" + "\n".join(l_vols)
             else:
                 reponse_bot = "⚠️ Aucun vol n'est actuellement chargé dans le système."
-
-        # 2. TEMPS RESTANT AVANT LE DÉPART / ARRIVÉE
         elif any(w in p_lower for w in ["temps", "restant", "reste", "combien de temps", "heure", "depart", "remaining", "time", "left"]):
             vol_trouve = None
             for _, r in df.iterrows():
@@ -871,28 +870,16 @@ elif st.session_state["user_role"] == "agent":
                 v_arr = str(vol_trouve.get("Heure_Arrivee", "12:00"))
                 v_esc = int(vol_trouve.get("Temps_Escale_Min", 45))
                 v_comp = vol_trouve.get("Compagnie")
-                
                 try:
                     h_arr_dt = datetime.datetime.strptime(v_arr, "%H:%M").time()
                     dt_arrivee_complet = datetime.datetime.combine(datetime.date.today(), h_arr_dt)
                     dt_depart_complet = dt_arrivee_complet + datetime.timedelta(minutes=v_esc)
-                    
                     delta = dt_depart_complet - maintenant
                     minutes_restantes = int(delta.total_seconds() / 60)
-                    
-                    if minutes_restantes > 0:
-                        heures_r = minutes_restantes // 60
-                        mins_r = minutes_restantes % 60
-                        temps_str = f"{heures_r}h {mins_r}min" if heures_r > 0 else f"{mins_r} minutes"
-                    else:
-                        temps_str = "Vol déjà parti ou échéance dépassée"
-
-                    if est_anglais:
-                        reponse_bot = f"⏱️ **Flight Status {v_num} ({v_comp}):**\n- Scheduled Arrival: **{v_arr}**\n- Layover duration: **{v_esc} min**\n- Calculated Departure: **{dt_depart_complet.strftime('%H:%M')}**\n- **Time remaining before departure:** ⏳ **{temps_str}**"
-                    else:
-                        reponse_bot = f"⏱️ **État et Temps Restant — Vol {v_num} ({v_comp}) :**\n- Heure d'arrivée prévue : **{v_arr}**\n- Temps d'escale : **{v_esc} min**\n- Heure de départ estimée : **{dt_depart_complet.strftime('%H:%M')}**\n- **Temps restant avant le départ :** ⏳ **{temps_str}** (Heure actuelle : {heure_actuelle_str})"
-                except Exception:
-                    reponse_bot = f"Le vol {v_num} arrive à {v_arr} avec une escale de {v_esc} min."
+                    temps_str = f"{minutes_restantes // 60}h {minutes_restantes % 60}min" if minutes_restantes > 0 else "Parti"
+                    reponse_bot = f"⏱️ **État — Vol {v_num} ({v_comp}) :**\n- Arrivée : {v_arr} | Escale : {v_esc} min\n- Départ estimé : **{dt_depart_complet.strftime('%H:%M')}**\n- **Temps restant avant le départ :** ⏳ **{temps_str}**"
+                except:
+                    reponse_bot = f"Vol {v_num} arrive à {v_arr}."
             else:
                 l_temps = []
                 for _, r in df.iterrows():
@@ -904,42 +891,15 @@ elif st.session_state["user_role"] == "agent":
                         dt_dep = datetime.datetime.combine(datetime.date.today(), h_arr_dt) + datetime.timedelta(minutes=v_esc)
                         delta = dt_dep - maintenant
                         m_rest = int(delta.total_seconds() / 60)
-                        l_temps.append(f"- **Vol {v_num}** (Arr: {v_arr}) : Départ à {dt_dep.strftime('%H:%M')} (Reste : **{m_rest} min**)")
+                        l_temps.append(f"- **Vol {v_num}** : Départ à {dt_dep.strftime('%H:%M')} (Reste : **{m_rest} min**)")
                     except:
                         pass
-                
-                t_str = "\n".join(l_temps)
-                if est_anglais:
-                    reponse_bot = f"⏱️ **Remaining time for today's flights:**\n\n{t_str}\n\n*(Specify a flight number like 'KP010' for precise details)*"
-                else:
-                    reponse_bot = f"⏱️ **Temps restant pour les vols du jour :**\n\n{t_str}\n\n*(Précisez un numéro de vol comme 'KP010' dans votre question pour un calcul instantané)*"
-
-        # 3. SOLUTIONS POUR CAS CRITIQUES & PROBLÈMES DIFFICILES
-        elif any(w in p_lower for w in ["critique", "solution", "difficile", "probleme", "panne", "retard", "urgence", "bloque", "critical", "problem", "solve", "help", "emergency"]):
+                reponse_bot = f"⏱️ **Temps restant pour les vols du jour :**\n\n" + "\n".join(l_temps)
+        elif any(w in p_lower for w in ["critique", "solution", "difficile", "probleme", "panne", "retard", "urgence", "bloque"]):
             nb_c = len(vols_critiques)
-            if est_anglais:
-                reponse_bot = f"🚨 **Expert Protocols & Solutions for Critical Cases ({nb_c} critical flights detected):**\n\n" \
-                              f"1. **Immediate Counter Scaling:** Open at least {guichets_recommandes} processing counters immediately to absorb peak transit.\n" \
-                              f"2. **Fast-Track Priority Escort:** Deploy mobile security agents (PC Sécurité) at tarmac gates to escort tight-connection passengers directly to boarding gates.\n" \
-                              f"3. **Baggage Fast-Handling:** Instruct baggage handlers (Tapis 1) to prioritize transfer luggage containers of flights with $\\le 45$ min layovers.\n" \
-                              f"4. **Airline Coordination:** Directly contact ground handling (ASKY / Air France handlers) to hold boarding doors open for 5 extra minutes if transit buses are delayed."
-            else:
-                reponse_bot = f"🚨 **Protocoles d'Urgence & Solutions Expertes ({nb_c} vol(s) critique(s) détecté(s)) :**\n\n" \
-                              f"1. **Renforcement Immédiat des Guichets :** Ouvrir au minimum **{guichets_recommandes} guichets** pour désengorger la file d'attente.\n" \
-                              f"2. **Escorte Fast-Track (Police / Sûreté) :** Dépêcher une équipe mobile au pied de l'avion pour exfiltrer les passagers en correspondance serrée et les faire passer par le circuit prioritaire.\n" \
-                              f"3. **Priorisation Bagages Soute :** Demander au service piste de traiter en priorité absolue les conteneurs de transit des vols avec escale $\\le 45$ min.\n" \
-                              f"4. **Coordination Compagnie :** Alerter le responsable escale (ex: ASKY / Air France) pour maintenir la porte d'embarquement ouverte 5 minutes supplémentaires si le pax est en transit immédiat."
-
-        # 4. SALUTATIONS & AUTRES
-        elif any(w in p_lower for w in ["bonjour", "salut", "bonsoir", "hello", "hi", "hey", "coucou"]):
-            reponse_bot = "Bonjour cher collègue ! Je suis prêt. Posez-moi n'importe quelle question sur le trafic, demandez la liste des vols, le nombre de guichets à ouvrir, ou les solutions à appliquer en cas critique !" if not est_anglais else "Hello colleague! I am ready. Ask me any traffic question, request the flight list, check how many counters to open, or ask for solutions in critical cases!"
-        elif any(w in p_lower for w in ["merci", "thank"]):
-            reponse_bot = "Avec grand plaisir ! Bon courage pour la gestion des flux à l'AIGE." if not est_anglais else "With great pleasure! Good luck managing the traffic at AIGE."
+            reponse_bot = f"🚨 **Protocoles d'Urgence ({nb_c} vol(s) critique(s)) :**\n1. Ouvrir au minimum **{guichets_recommandes} guichets**.\n2. Dépêcher une équipe mobile pour escorter les passagers.\n3. Prioriser les conteneurs de bagages en soute (Tapis 1)."
         else:
-            if est_anglais:
-                reponse_bot = "I am AeroFlow's expert assistant. You can ask me to list all daily flights, check how many counters to open, view remaining time before departure, or get solutions for critical cases."
-            else:
-                reponse_bot = "Je suis l'assistant expert d'AeroFlow. Vous pouvez me demander de lister tous les vols du jour, de vous dire combien de guichets ouvrir, de calculer le temps restant avant le départ, ou de vous donner les solutions en cas critique."
+            reponse_bot = "Je suis l'assistant expert d'AeroFlow. Demandez-moi la liste des vols, le nombre de guichets à ouvrir ou le temps restant avant le départ."
 
         st.session_state["messages_chat"].append({"role": "assistant", "content": reponse_bot})
         st.rerun()
