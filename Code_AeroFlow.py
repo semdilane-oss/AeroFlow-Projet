@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJET : AeroFlow - Control Center (AIGE)
-# APPLICATION WEB STREAMLIT - CODE COMPLET & CORRIGÉ
+# APPLICATION WEB STREAMLIT - MIS À JOUR (AVATION DE LOMÉ & BOUTON VERT)
 # ==============================================================================
 
 import glob
@@ -45,7 +45,7 @@ if "theme_sombre" not in st.session_state:
     st.session_state["theme_sombre"] = False
 
 if "user_role" not in st.session_state:
-    st.session_state["user_role"] = None  # 'passager', 'agent', None
+    st.session_state["user_role"] = None
 
 if "current_user" not in st.session_state:
     st.session_state["current_user"] = ""
@@ -53,7 +53,6 @@ if "current_user" not in st.session_state:
 if "db_passagers" not in st.session_state:
     st.session_state["db_passagers"] = {}
 
-# Identifiants STRICTS des agents ANAC / PC Sécurité (Mots de passe >= 6 caractères)
 AGENT_CREDENTIALS = {
     "admin_anac": "anac2026",
     "agent_p2": "lome2026"
@@ -61,7 +60,7 @@ AGENT_CREDENTIALS = {
 
 
 # ------------------------------------------------------------------------------
-# 2. SELECTION DU THÈME & CSS DYNAMIQUE (CORRECTIF VISIBILITÉ MODE CLAIR)
+# 2. THÈME & CSS DYNAMIQUE (BOUTON VERT POUR LA CONNEXION AGENT)
 # ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Configuration")
@@ -150,6 +149,12 @@ st.markdown(
         border: none !important; padding: 10px 20px !important; width: 100%;
     }}
     
+    /* Bouton spécifique de connexion agent en VERT */
+    div[data-testid="stForm"]:nth-of-type(2) div.stButton > button,
+    form div.stButton > button {{
+        /* On applique le style général ou spécifique si besoin */
+    }}
+
     div[data-testid="stChatMessage"] {{
         background-color: {chat_bg} !important;
         border-radius: 8px !important;
@@ -193,6 +198,11 @@ st.markdown(
         -webkit-text-fill-color: {placeholder_color} !important;
         opacity: 1 !important;
     }}
+    
+    /* Classe utilitaire pour forcer un bouton vert */
+    .btn-vert button {{
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+    }}
 </style>
 """,
     unsafe_allow_html=True,
@@ -209,7 +219,6 @@ def calculer_capacite_dynamique(df_vols):
     capacites = []
     for _, row in df_vols.iterrows():
         compagnie = str(row.get("Compagnie", "")).upper()
-
         if any(c in compagnie for c in ["ASKY", "CEIBA", "AIR COTE", "OVERLAND", "AIR PEACE"]):
             cap_base = 50.0
         elif any(c in compagnie for c in ["AIR FRANCE", "TURKISH", "BRUSSELS", "ROYAL AIR MAROC"]):
@@ -222,7 +231,6 @@ def calculer_capacite_dynamique(df_vols):
         taux_t = row.get("Taux_Transit", 0.2)
         if taux_t > 0.35:
             cap_base += 5.0
-
         capacites.append(cap_base)
 
     df_vols["Capacite_Estimee"] = capacites
@@ -240,7 +248,6 @@ def charger_et_nettoyer_donnees(source_fichier):
         contenu_octets = contenu_octets[3:]
 
     contenu_texte = contenu_octets.decode("utf-8", errors="ignore")
-
     premiere_ligne = contenu_texte.splitlines()[0] if contenu_texte else ""
     separateur = ","
     if premiere_ligne.count(";") > premiere_ligne.count(","):
@@ -369,14 +376,14 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
 
 
 # ------------------------------------------------------------------------------
-# 4. GESTION DES ACCÈS / AUTHENTIFICATION (SÉCURITÉ & MDP >= 6 CARACTÈRES)
+# 4. GESTION DES ACCÈS / AUTHENTIFICATION
 # ------------------------------------------------------------------------------
 
 if st.session_state["user_role"] is None:
     st.markdown('<div class="header-title">🛫 Bienvenue sur AeroFlow — AIGE Lomé</div>', unsafe_allow_html=True)
     st.markdown('<div class="header-subtitle">Veuillez choisir votre espace pour accéder à la plateforme.</div>', unsafe_allow_html=True)
 
-    tab_passager, tab_agent = st.tabs(["👤 Espace Passager", "🛡️ Espace Agent ANAC / PC Sécurité"])
+    tab_passager, tab_agent = st.tabs(["👤 Espace Passager", "🛡️ Espace Agent Aviation de Lomé / PC Sécurité"])
 
     with tab_passager:
         st.subheader("Accès Voyageurs & Passagers")
@@ -445,7 +452,9 @@ if st.session_state["user_role"] is None:
 
     with tab_agent:
         st.subheader("Accès Sécurisé — Régulation & PC Sécurité")
-        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ Zone protégée réservée aux agents habilités de l\'ANAC. Les identifiants sont strictement contrôlés.</div>', unsafe_allow_html=True)
+        
+        # MODIFICATION 1 : "Aviation de Lomé" appliqué ici dans le message d'alerte
+        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ Zone protégée réservée aux agents habilités de l\'Aviation de Lomé. Les identifiants sont strictement contrôlés.</div>', unsafe_allow_html=True)
 
         afficher_mdp_agent = st.checkbox("👁️ Afficher les caractères en clair", key="chk_agent_visible")
         input_type_agent = "default" if afficher_mdp_agent else "password"
@@ -453,6 +462,8 @@ if st.session_state["user_role"] is None:
         mode_agent = st.radio("Option agent :", ["Connexion", "Modifier mon mot de passe agent"], horizontal=True)
 
         if mode_agent == "Connexion":
+            # MODIFICATION 2 : Conteneur avec classe CSS .btn-vert pour rendre le bouton de connexion VERT
+            st.markdown('<div class="btn-vert">', unsafe_allow_html=True)
             with st.form("form_login_agent"):
                 agent_user = st.text_input("Identifiant Agent officiel (ex: admin_anac)")
                 agent_pass = st.text_input("Mot de passe", type=input_type_agent)
@@ -465,6 +476,7 @@ if st.session_state["user_role"] is None:
                         st.rerun()
                     else:
                         st.error("⚠️ Accès refusé. Identifiant ou mot de passe agent invalide.")
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
             with st.form("form_reset_agent"):
                 st.info("Modifiez votre mot de passe agent (6 caractères minimum requis).")
@@ -511,7 +523,7 @@ if st.session_state["user_role"] == "passager":
 
 
 # ------------------------------------------------------------------------------
-# 6. VUE ESPACE AGENT ANAC / PC SÉCURITÉ
+# 6. VUE ESPACE AGENT AVIATION DE LOMÉ / PC SÉCURITÉ
 # ------------------------------------------------------------------------------
 
 elif st.session_state["user_role"] == "agent":
@@ -580,7 +592,7 @@ elif st.session_state["user_role"] == "agent":
             st.warning(f"💡 **Recommandation :** Ouvrir au moins **{guichets_recommandes} guichets** pour absorber la pointe.")
 
     st.markdown('<div class="header-title">✈️ AeroFlow — Operations Control Center</div>', unsafe_allow_html=True)
-    st.markdown('<div class="header-subtitle">Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & ANAC</div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-subtitle">Aéroport International Gnassingbé Eyadéma (AIGE) | Aviation de Lomé & PC Sécurité</div>', unsafe_allow_html=True)
 
     vols_critiques = df[df["Temps_Escale_Min"] <= 45] if "Temps_Escale_Min" in df.columns else pd.DataFrame()
 
