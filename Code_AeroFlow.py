@@ -468,25 +468,25 @@ st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
 
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = [
-        {"role": "assistant", "content": "Bonjour ! Je suis AeroBot, votre assistant d'exploitation AIGE. Comment puis-je vous aider aujourd'hui ?"}
+        {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation AIGE. Comment puis-je vous aider aujourd'hui ?"}
     ]
 
-# Affichage des anciens messages
+# Affichage de l'historique des discussions
 for msg in st.session_state["messages_chat"]:
     st.chat_message(msg["role"]).write(msg["content"])
 
 prompt_utilisateur = None
-mode_vocal = False  # Flag pour détecter si la question vient du micro ou du clavier
+mode_vocal = False
 
-col_mic, col_txt = st.columns([1, 4])
+# Zone de saisie compacte et chic (Micro + Barre de texte alignés)
+col_barre, col_mic = st.columns([8, 1])
 
 with col_mic:
     if VOICE_INPUT_AVAILABLE:
-        st.write("🎙️ **Commande Vocale :**")
         audio_recorded = mic_recorder(
-            start_prompt="🔴 Parler",
-            stop_prompt="⬛ Stopper",
-            key="mic_chat_int"
+            start_prompt="🎙️",
+            stop_prompt="⏹️",
+            key="mic_chat_chic"
         )
         if audio_recorded and "bytes" in audio_recorded:
             audio_bytes = audio_recorded["bytes"]
@@ -507,100 +507,80 @@ with col_mic:
             
             if prompt_utilisateur:
                 mode_vocal = True
-                st.success(f"🗣️ Entendu : « {prompt_utilisateur} »")
-    else:
-        st.caption("🎙️ Installez `streamlit-mic-recorder` pour le micro.")
 
-with col_txt:
-    prompt_texte = st.chat_input("Écrivez votre message ici (ex: Bonjour, Quels sont les vols à risque ?)...")
+with col_barre:
+    prompt_texte = st.chat_input("Posez votre question ici (ex: Salut, Vols critiques, Guichets)...")
     if prompt_texte:
         prompt_utilisateur = prompt_texte
         mode_vocal = False
 
-# Traitement intelligent du message
+# Traitement de la réponse
 if prompt_utilisateur:
     st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
     st.chat_message("user").write(prompt_utilisateur)
 
-    q = prompt_utilisateur.lower()
+    q = prompt_utilisateur.lower().strip()
     reponse = ""
     lang_rep = "fr"
 
-    # Détection de l'Anglais
-    is_english = any(w in q for w in ["hello", "hi", "flight", "critical", "counter", "agent", "passenger", "how many", "which", "thanks", "thank you"])
+    # Détection de la langue
+    is_english = any(w in q for w in ["hello", "hi", "flight", "critical", "counter", "agent", "passenger", "thanks"])
 
     if is_english:
         lang_rep = "en"
-        # 1. Salutations & Politesses
-        if any(k in q for k in ["hello", "hi", "good morning", "good afternoon", "hey"]):
-            reponse = "Hello! I am AeroBot, your operations assistant at AIGE. How can I help you with today's flights or passengers?"
-        elif any(k in q for k in ["how are you", "how do you do"]):
-            reponse = "I am operating at 100% capacity! How can I assist you with terminal operations today?"
-        elif any(k in q for k in ["thank", "thanks"]):
-            reponse = "You're welcome! Let me know if you need any further operational information."
-        
-        # 2. Questions métier (Vols, Guichets, Passagers)
-        elif any(k in q for k in ["critical", "risk", "alert", "tight"]):
+        if any(k in q for k in ["hello", "hi", "hey", "good morning"]):
+            reponse = "Hello! How can I help you today with airport operations?"
+        elif any(k in q for k in ["how are you"]):
+            reponse = "I'm doing great, ready to assist! What do you need help with?"
+        elif any(k in q for k in ["critical", "risk", "alert"]):
             if not vols_critiques.empty:
                 nb = len(vols_critiques)
                 pax_t = int(vols_critiques["Passagers_Transit"].sum())
-                reponse = f"⚠️ We have {nb} critical flight(s) representing {pax_t} transit passengers.\n\n"
-                for _, v in vols_critiques.iterrows():
-                    reponse += f"- Flight {v.get('Vol')} ({v.get('Compagnie')}) : Arrival at {v.get('Heure_Arrivee')}, Layover: {v.get('Temps_Escale_Min')} min.\n"
+                reponse = f"⚠️ We have {nb} critical flight(s) with {pax_t} transit passengers."
             else:
-                reponse = "🟢 No critical flights reported at the moment. Traffic is smooth!"
-
-        elif any(k in q for k in ["counter", "agent", "capacity", "open"]):
-            reponse = f"💡 **Counter Recommendation:** Currently, you have {guichets_ouverts} counter(s) open.\n\nTo handle peak traffic, we recommend opening at least {guichets_recommandes} counters."
-
-        elif any(k in q for k in ["passenger", "flow", "total", "traffic"]):
-            reponse = f"📊 **Daily Traffic Report:**\n- Total expected passengers: {total_passagers:,} pax\n- Transit passengers: {total_transit:,} pax"
-
+                reponse = "🟢 Everything is smooth! No critical flights right now."
         else:
-            reponse = "🤖 I can help you with: **critical flights**, **counter recommendations**, **total expected passengers**, or answering general greetings!"
-
+            reponse = "🤖 I can help you with: **critical flights**, **counters**, or **total passengers**. How can I help?"
     else:
-        # Traitement en Français
+        # Français
         lang_rep = "fr"
-        # 1. Salutations & Politesses
-        if any(k in q for k in ["bonjour", "salut", "bonsoir", "coucou", "hello"]):
-            reponse = "Bonjour ! Je suis AeroBot, l'assistant d'exploitation de l'AIGE. Comment puis-je vous aider aujourd'hui ?"
-        elif any(k in q for k in ["comment vas-tu", "ça va", "comment ca va"]):
-            reponse = "Je vais très bien, prêt à optimiser le flux des passagers sur le terminal ! Que puis-je faire pour vous ?"
-        elif any(k in q for k in ["merci", "super", "parfait", "excellent"]):
-            reponse = "Je vous en prie ! N'hésitez pas si vous avez d'autres questions sur le programme de vol."
-        
-        # 2. Questions métier (Vols, Guichets, Passagers)
+        if any(k in q for k in ["salut", "bonjour", "coucou", "hello", "bonsoir"]):
+            reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
+        elif any(k in q for k in ["ça va", "ca va", "comment vas-tu"]):
+            reponse = "Ça va très bien, merci ! Que puis-je faire pour vous ?"
+        elif any(k in q for k in ["merci", "super", "parfait"]):
+            reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions."
         elif any(k in q for k in ["critique", "risque", "alerte", "retard", "vol"]):
             if not vols_critiques.empty:
                 nb = len(vols_critiques)
                 pax_t = int(vols_critiques["Passagers_Transit"].sum())
-                reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) (escale ≤ 45 min) représentant {pax_t} passagers en transit rapide.\n\n"
+                reponse = f"⚠️ Nous avons {nb} vol(s) critique(s) représentant {pax_t} passagers en transit rapide.\n\n"
                 for _, v in vols_critiques.iterrows():
                     reponse += f"- Vol {v.get('Vol')} ({v.get('Compagnie')}) : Arrivée à {v.get('Heure_Arrivee')}, Escale : {v.get('Temps_Escale_Min')} min.\n"
             else:
-                reponse = "🟢 Aucun vol critique n'est à signaler pour le moment. La situation est fluide !"
-
-        elif any(k in q for k in ["guichet", "agent", "capacit", "ouvrir"]):
-            reponse = f"💡 **Recommandation Guichets :** Actuellement, vous avez {guichets_ouverts} guichet(s) ouvert(s).\n\nPour la pointe de trafic, il est recommandé d'ouvrir au moins {guichets_recommandes} guichets."
-
-        elif any(k in q for k in ["passager", "flux", "total", "monde", "trafic"]):
-            reponse = f"📊 **Bilan du trafic du jour :**\n- Passagers totaux attendus : {total_passagers:,} pax\n- Dont passagers en transit : {total_transit:,} pax"
-
+                reponse = "🟢 Aucun vol critique n'est à signaler. La situation est parfaite !"
+        elif any(k in q for k in ["guichet", "agent", "ouvrir"]):
+            reponse = f"💡 Actuellement, {guichets_ouverts} guichet(s) sont ouverts. Il est recommandé d'en ouvrir au moins {guichets_recommandes}."
+        elif any(k in q for k in ["passager", "flux", "total", "monde"]):
+            reponse = f"📊 Total attendu aujourd'hui : {total_passagers:,} passagers (dont {total_transit:,} en transit)."
         else:
-            reponse = "🤖 Je peux vous informer sur : les **vols critiques**, la **recommandation de guichets**, ou le **total des passagers attendus**. Que souhaitez-vous savoir ?"
+            reponse = "🤖 Salut ! Je peux vous informer sur les **vols critiques**, les **guichets** ou le **nombre de passagers**. Que souhaitez-vous savoir ?"
 
-    # Affichage de la réponse texte dans le chat
+    # Affichage de la réponse
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
     st.chat_message("assistant").write(reponse)
 
-    # Réponse vocale déclenchée UNIQUEMENT SI la question a été posée par le micro !
+    # Audio uniquement si question vocale
     if mode_vocal:
         try:
             texte_audio = reponse.replace("*", "").replace("#", "")
             tts_bot = gTTS(text=texte_audio, lang=lang_rep)
             fp_bot = io.BytesIO()
             tts_bot.write_to_fp(fp_bot)
+            fp_bot.seek(0)
+            st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
+        except Exception:
+            pass
             fp_bot.seek(0)
             st.audio(fp_bot.read(), format="audio/mp3", autoplay=True)
         except Exception:
