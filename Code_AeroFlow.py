@@ -22,14 +22,6 @@ try:
 except ImportError:
     REPORTLAB_AVAILABLE = False
 
-# Imports pour la reconnaissance vocale et le micro
-try:
-    from streamlit_mic_recorder import mic_recorder
-    import speech_recognition as sr
-    VOICE_INPUT_AVAILABLE = True
-except ImportError:
-    VOICE_INPUT_AVAILABLE = False
-
 
 # ------------------------------------------------------------------------------
 # 1. CONFIGURATION DE LA PAGE & INITIALISATION
@@ -96,6 +88,7 @@ if st.session_state["theme_sombre"]:
     success_text = "#ECFDF5"
     alert_bg = "#2D1517"
     alert_text = "#FCA5A5"
+    btn_bg_gradient = "linear-gradient(135deg, #059669 0%, #047857 100%)"
 else:
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
@@ -114,8 +107,9 @@ else:
     
     success_bg = "#DCFCE7"
     success_text = "#166534"
-    alert_bg = "#FEF2F2"
-    alert_text = "#991B1B"
+    alert_bg = "#F0FDF4"
+    alert_text = "#166534"
+    btn_bg_gradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
 
 st.markdown(
     f"""
@@ -123,7 +117,7 @@ st.markdown(
     .stApp {{ background-color: {bg_app} !important; color: {text_main} !important; }}
     
     .header-title {{ font-family: 'Segoe UI', sans-serif; font-weight: 800; font-size: 2.2rem; color: {title_color}; }}
-    .header-subtitle {{ color: #0284C7; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
+    .header-subtitle {{ color: #10B981; font-weight: 600; font-size: 1rem; margin-bottom: 20px; }}
     
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {{
         color: {text_main} !important;
@@ -140,7 +134,7 @@ st.markdown(
 
     .kpi-container {{
         background-color: {card_bg}; border: 1px solid {border_color}; border-radius: 12px;
-        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #0284C7;
+        padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-top: 4px solid #10B981;
     }}
     .kpi-container-alert {{ border-top: 4px solid #EF4444 !important; background-color: {alert_bg}; }}
     .kpi-label {{ font-size: 0.8rem; font-weight: 700; color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#475569'}; text-transform: uppercase; }}
@@ -153,7 +147,7 @@ st.markdown(
     }}
     
     div.stButton > button {{
-        background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+        background: {btn_bg_gradient} !important;
         color: white !important; font-weight: 700 !important; border-radius: 8px !important;
         border: none !important; padding: 10px 20px !important; width: 100%;
     }}
@@ -315,7 +309,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
         'DocTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor('#0F172A'), spaceAfter=6
     )
     subtitle_style = ParagraphStyle(
-        'DocSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#0284C7'), spaceAfter=15
+        'DocSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#10B981'), spaceAfter=15
     )
     normal_bold = ParagraphStyle(
         'NormalBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, textColor=colors.HexColor('#0F172A')
@@ -333,7 +327,7 @@ def generer_pdf_rapport(df_complet, df_critiques, total_pax, total_trans, guiche
     ]
     t_kpi = Table(kpi_data, colWidths=[130, 130, 130, 130])
     t_kpi.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0284C7')),
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#10B981')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -386,7 +380,7 @@ if st.session_state["user_role"] is None:
 
     tab_passager, tab_agent = st.tabs([
         t("👤 Espace Passager", "👤 Passenger Area"), 
-        t("🛡️ Espace Agent ANAC / PC Sécurité", "🛡️ ANAC / Security PC Area")
+        t("🛡️ Espace Sécurité & Régulation AIGE", "🛡️ AIGE Security & Regulation Area")
     ])
 
     with tab_passager:
@@ -459,8 +453,8 @@ if st.session_state["user_role"] is None:
                         st.success(t("Mot de passe modifié avec succès ! Vous pouvez vous connecter.", "Password updated successfully! You can now log in."))
 
     with tab_agent:
-        st.subheader(t("Accès Sécurisé — Régulation & PC Sécurité", "Secure Access — Regulation & Security PC"))
-        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #EF4444;">{t("⚠️ Zone protégée réservée aux agents habilités de l\'ANAC. Les identifiants sont strictement contrôlés.", "⚠️ Protected area reserved for authorized ANAC officers. Credentials are strictly controlled.")}</div>', unsafe_allow_html=True)
+        st.subheader(t("Portail Opérationnel — Aérodrome International Gnassingbé Eyadéma", "Operational Portal — Gnassingbé Eyadéma International Aerodrome"))
+        st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 12px 16px; border-radius: 8px; font-weight: 700; margin-bottom: 15px; border: 1px solid #10B981;">🛡️ {t("Accès réservé au personnel accrédité de la plateforme AIGE. Connexion sécurisée sous haute surveillance.", "Access restricted to accredited AIGE platform personnel. Secure connection under strict surveillance.")}</div>', unsafe_allow_html=True)
 
         afficher_mdp_agent = st.checkbox(t("👁️ Afficher les caractères en clair", "👁️ Show plain text characters"), key="chk_agent_visible")
         input_type_agent = "default" if afficher_mdp_agent else "password"
@@ -595,7 +589,7 @@ elif st.session_state["user_role"] == "agent":
             st.warning(f"💡 **{t('Recommandation :', 'Recommendation:')}** {t('Ouvrir au moins', 'Open at least')} **{guichets_recommandes} {t('guichets', 'counters')}** {t('pour absorber la pointe.', 'to handle the peak.')}")
 
     st.markdown(f'<div class="header-title">{t("✈️ AeroFlow — Operations Control Center", "✈️ AeroFlow — Operations Control Center")}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="header-subtitle">{t("Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & ANAC", "Gnassingbé Eyadéma International Airport (AIGE) | Security PC & ANAC")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="header-subtitle">{t("Aéroport International Gnassingbé Eyadéma (AIGE) | PC Sécurité & Régulation", "Gnassingbé Eyadéma International Airport (AIGE) | Security PC & Regulation")}</div>', unsafe_allow_html=True)
 
     vols_critiques = df[df["Temps_Escale_Min"] <= 45] if "Temps_Escale_Min" in df.columns else pd.DataFrame()
 
@@ -623,7 +617,7 @@ elif st.session_state["user_role"] == "agent":
         st.subheader(t("📊 Affluence Globale par Tranche Horaire", "📊 Overall Traffic by Time Slot"))
         if "Tranche_Horaire" in df.columns and "Passagers" in df.columns:
             df_affluence_heure = df.groupby("Tranche_Horaire")["Passagers"].sum().reset_index()
-            fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Blues", template=plotly_template)
+            fig_affluence = px.bar(df_affluence_heure, x="Tranche_Horaire", y="Passagers", text_auto=True, color="Passagers", color_continuous_scale="Greens", template=plotly_template)
             fig_affluence.update_layout(xaxis_title=t("Tranche Horaire", "Time Slot"), yaxis_title=t("Total Passagers", "Total Passengers"), margin=dict(l=10, r=10, t=30, b=10))
             st.plotly_chart(fig_affluence, use_container_width=True)
 
@@ -670,7 +664,7 @@ elif st.session_state["user_role"] == "agent":
                 st.error(f"{t('Erreur de génération vocale :', 'Voice generation error:')} {e}")
 
         with col_info:
-            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #10B981;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
 
         with st.container(height=280):
             for _, vol in vols_critiques.iterrows():
@@ -724,10 +718,7 @@ elif st.session_state["user_role"] == "agent":
         with st.chat_message("user"):
             st.markdown(prompt_utilisateur)
 
-        # Logique de réponse intelligente et bilingue du chatbot
         p_lower = prompt_utilisateur.lower()
-        
-        # Détection simple de la langue de la question (ou utilisation de la langue de l'interface)
         est_anglais = any(w in p_lower for w in ["flight", "delay", "passenger", "gate", "status", "how", "what", "many", "critical", "help"]) or langue_interface == "English"
 
         if any(w in p_lower for w in ["critique", "critical", "delay", "retard"]):
