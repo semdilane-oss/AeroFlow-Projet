@@ -126,18 +126,22 @@ st.markdown(
         box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
     }}
     
-    /* Inscription texte dans la capsule - FIX VISIBILITÉ DU TEXTE D'RIT */
-    div[data-testid="stForm"] input, div[data-testid="stTextInput"] input {{
+    /* Correctif visibilité de la saisie utilisateur (Mode Clair/Sombre) */
+    div[data-testid="stForm"] input, 
+    div[data-testid="stTextInput"] input,
+    div[data-baseweb="input"] input {{
         color: {input_text_color} !important;
         -webkit-text-fill-color: {input_text_color} !important;
         background-color: transparent !important;
-        border: none !important;
+        caret-color: {input_text_color} !important;
     }}
 
     /* Style du Placeholder (Texte d'indication quand vide) */
-    div[data-testid="stForm"] input::placeholder, div[data-testid="stTextInput"] input::placeholder {{
+    div[data-testid="stForm"] input::placeholder, 
+    div[data-testid="stTextInput"] input::placeholder {{
         color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
         -webkit-text-fill-color: {'#9CA3AF' if st.session_state['theme_sombre'] else '#64748B'} !important;
+        opacity: 1 !important;
     }}
 
     /* Correctif du Bouton Micro et Envoi */
