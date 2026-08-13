@@ -114,8 +114,8 @@ else:
     
     success_bg = "#DCFCE7"
     success_text = "#166534"
-    alert_bg = "#F0FDF4"
-    alert_text = "#166534"
+    alert_bg = "#FEF2F2"
+    alert_text = "#991B1B"
     
     btn_bg_gradient = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
     banner_bg = "#FEE2E2"
@@ -714,7 +714,7 @@ elif st.session_state["user_role"] == "agent":
                 st.error(f"{t('Erreur de génération vocale :', 'Voice generation error:')} {e}")
 
         with col_info:
-            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #0284C7;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background-color: {alert_bg}; color: {alert_text}; padding: 14px 18px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 15px; border: 1px solid #EF4444;">⚠️ {len(vols_critiques):,} {t("vol(s) critique(s) détecté(s) (Escale ≤ 45 min)", "critical flight(s) detected (Layover ≤ 45 min)")}</div>', unsafe_allow_html=True)
 
         with st.container(height=280):
             for _, vol in vols_critiques.iterrows():
