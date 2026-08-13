@@ -584,9 +584,9 @@ with exp_col3:
     else:
         st.warning("Module ReportLab indisponible pour l'export PDF.")
 
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # 11. ASSISTANT VIRTUEL D'EXPLOITATION INTELLIGENT (AeroBot)
-# ------------------------------------------------------------------------------
+# ==============================================================================
 st.markdown("---")
 st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
 
@@ -650,37 +650,40 @@ with st.form(key="gemini_chat_form", clear_on_submit=True):
         prompt_utilisateur = prompt_texte
         mode_vocal = False
 
-# 2. Logique de traitement des réponses avec gestion du hors-contexte
+# 2. Logique de traitement des réponses avec gestion de la politesse et du hors-contexte
 if prompt_utilisateur:
-    # Ajouter le message utilisateur
+    # Ajouter le message utilisateur à l'historique
     st.session_state["messages_chat"].append({"role": "user", "content": prompt_utilisateur})
 
     q = prompt_utilisateur.lower().strip()
     reponse = ""
     lang_rep = "fr"
 
-    # Mots-clés autorisés liés au domaine aéroportuaire & salutations
+    # Mots-clés autorisés (Politesse/Courtoisie + Métier)
     mots_cles_aero = [
+        # Courtoisie & Salutations
         "salut", "bonjour", "coucou", "hello", "hi", "hey", "bonsoir",
-        "ça va", "ca va", "comment vas-tu", "merci", "super", "parfait",
+        "ca va", "ça va", "comment vas-tu", "comment vas tu", "tu vas bien", 
+        "vas bien", "forme", "how are you", "merci", "super", "parfait",
+        
+        # Domaine Métier (Aéroport / Vols / Passagers)
         "vol", "vols", "critique", "critiques", "risque", "alerte", "retard", "escale",
         "guichet", "guichets", "agent", "agents", "ouvrir", "capacite", "capacité",
         "passager", "passagers", "pax", "flux", "transit", "total", "affluence",
         "compagnie", "compagnies", "aige", "aeroflow", "aerobot", "rapport", "pdf"
     ]
 
-    # Vérification si la question appartient au domaine
     est_dans_le_contexte = any(mot in q for mot in mots_cles_aero)
-    is_english = any(w in q for w in ["hello", "hi", "flight", "critical", "counter", "agent", "passenger", "thanks"])
+    is_english = any(w in q for w in ["hello", "hi", "flight", "critical", "counter", "agent", "passenger", "thanks", "how are you"])
 
     if not est_dans_le_contexte:
-        # Réponse générique d'orientation hors-contexte
+        # Réponse filtrée pour les sujets hors domaine
         if is_english:
             lang_rep = "en"
             reponse = (
-                "Je ne peux pas vous aider pour cette question. "
-                "Cependant, je peux vous renseigner sur la gestion des vols critiques, "
-                "l'estimation des guichets à ouvrir ou le flux des passagers de l'AIGE."
+                "I cannot help you with that request. "
+                "However, I can assist you with critical flights management, "
+                "desk allocation, or passenger flow monitoring at AIGE."
             )
         else:
             lang_rep = "fr"
@@ -690,11 +693,13 @@ if prompt_utilisateur:
                 "l'estimation des guichets à ouvrir ou le suivi des flux de passagers à l'AIGE."
             )
     else:
-        # Traitement des questions métier
+        # Réponses adaptées selon la question
         if is_english:
             lang_rep = "en"
             if any(k in q for k in ["hello", "hi", "hey"]):
                 reponse = "Hello! How can I help you today with airport operations?"
+            elif any(k in q for k in ["how are you", "how do you do"]):
+                reponse = "I'm doing great, thank you! How can I assist you with operations today?"
             elif any(k in q for k in ["critical", "risk", "alert"]):
                 if not vols_critiques.empty:
                     nb = len(vols_critiques)
@@ -708,8 +713,8 @@ if prompt_utilisateur:
             lang_rep = "fr"
             if any(k in q for k in ["salut", "bonjour", "coucou", "hello", "bonsoir"]):
                 reponse = "Salut ! Comment puis-je vous aider aujourd'hui sur l'exploitation des vols ?"
-            elif any(k in q for k in ["ça va", "ca va", "comment vas-tu"]):
-                reponse = "Ça va très bien, merci ! Que puis-je faire pour vous ?"
+            elif any(k in q for k in ["ça va", "ca va", "vas bien", "comment vas-tu", "comment vas tu", "forme"]):
+                reponse = "Je vais très bien, merci ! Prêt pour le suivi des vols. Que puis-je faire pour vous ?"
             elif any(k in q for k in ["merci", "super", "parfait"]):
                 reponse = "Avec plaisir ! N'hésitez pas si vous avez d'autres questions."
             elif any(k in q for k in ["critique", "risque", "alerte", "retard", "vol", "escale"]):
@@ -726,7 +731,7 @@ if prompt_utilisateur:
             else:
                 reponse = "🤖 Je peux vous renseigner sur les **vols critiques**, le nombre de **guichets** ou les **flux de passagers**."
 
-    # Ajouter la réponse du bot
+    # Ajouter la réponse du bot à l'historique
     st.session_state["messages_chat"].append({"role": "assistant", "content": reponse})
 
     if mode_vocal:
