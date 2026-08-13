@@ -67,8 +67,13 @@ if st.session_state["theme_sombre"]:
     input_text_color = "#FFFFFF"
     input_bg_color = "#1E1F20"
     radio_text_color = "#E3E3E3"
+    
+    # Couleurs spécifique pour les bulle du Chat
+    chat_bg = "#2D2E30"
+    chat_text = "#E3E3E3"
+    avatar_bg = "#EF4444"
 else:
-    # THÈME CLAIR
+    # THÈME CLAIR (Ajusté selon l'image demandée)
     bg_app = "#F8FAFC"
     text_main = "#0F172A"
     card_bg = "#FFFFFF"
@@ -78,6 +83,11 @@ else:
     input_text_color = "#0F172A"
     input_bg_color = "#FFFFFF"
     radio_text_color = "#0F172A"
+    
+    # Couleurs spécifiques pour reproduire exactement l'image en Mode Clair
+    chat_bg = "#9399A0"       # Gris moyen identique à l'image
+    chat_text = "#0F172A"     # Texte sombre bien lisible
+    avatar_bg = "#FF2A2A"     # Carré rouge vif pour l'avatar
 
 st.markdown(
     f"""
@@ -110,11 +120,31 @@ st.markdown(
         border: none !important; padding: 10px 20px !important; width: 100%;
     }}
     
-    /* Affichage des messages du Chat */
-    .stChatMessage, .stChatMessage p, div[data-testid="stChatMessageContent"] {{
-        color: {text_main} !important;
-        font-weight: 500 !important;
-        font-size: 1rem !important;
+    /* --- FIX DYNAMIQUEMENT ADAPTÉ AUX MESSAGES DE CHAT (STYLE IMAGE) --- */
+    
+    /* Conteneur principal de la bulle de chat */
+    div[data-testid="stChatMessage"] {{
+        background-color: {chat_bg} !important;
+        border-radius: 8px !important;
+        padding: 8px 14px !important;
+        margin-bottom: 10px !important;
+        border: none !important;
+    }}
+
+    /* Icône / Avatar rouge sur le côté */
+    div[data-testid="stChatMessage"] div[data-testid="stChatMessageAvatar"] {{
+        background-color: {avatar_bg} !important;
+        border-radius: 8px !important;
+        color: #FFFFFF !important;
+    }}
+
+    /* Texte des messages */
+    div[data-testid="stChatMessage"] p, 
+    div[data-testid="stChatMessageContent"] p,
+    div[data-testid="stChatMessageContent"] {{
+        color: {chat_text} !important;
+        font-weight: 600 !important;
+        font-size: 1.05rem !important;
     }}
 
     /* --- FIX CAPSULE & ZONE DE SAISIE STREAMLIT --- */
@@ -128,7 +158,7 @@ st.markdown(
         box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
     }}
     
-    /* Nettoyage du conteneur interne de Streamlit (suppression de la boîte noire/sombre) */
+    /* Nettoyage du conteneur interne de Streamlit */
     div[data-testid="stForm"] div[data-baseweb="input"],
     div[data-testid="stForm"] div[data-baseweb="base-input"],
     div[data-testid="stTextInput"] > div {{
@@ -559,7 +589,7 @@ st.subheader("🤖 AeroBot — Assistant Virtuel d'Exploitation")
 
 if "messages_chat" not in st.session_state:
     st.session_state["messages_chat"] = [
-        {"role": "assistant", "content": "Salut ! Je suis AeroBot, votre assistant d'exploitation AIGE. Comment puis-je vous aider aujourd'hui ?"}
+        {"role": "assistant", "content": "salut"}
     ]
 
 # Affichage des messages
