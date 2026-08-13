@@ -173,18 +173,20 @@ st.markdown(
     div[data-testid="stChatInput"] {{
         background-color: {input_box_bg} !important; border: 1px solid #0284C7 !important; border-radius: 12px !important;
     }}
-    /* FIX (indicateur micro) : légende d'aide sous le bouton micro */
-    .mic-hint {{
-        font-size: 0.72rem; color: {placeholder_color}; text-align: center; margin-top: 2px;
-    }}
     /* FIX (contraste) : les labels de champs, radios et checkboxes héritent d'une couleur
-       très claire par défaut chez Streamlit, invisible sur fond clair. On force la couleur. */
-    label, [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
-    .stRadio label, .stRadio div[role="radiogroup"] label span,
+       très claire par défaut chez Streamlit, invisible sur fond clair. On force la couleur
+       avec des sélecteurs larges pour couvrir toutes les variantes du DOM Streamlit. */
+    label, [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] *,
+    div[data-testid="stRadio"] label, div[data-testid="stRadio"] label *,
+    div[data-testid="stRadio"] div[role="radiogroup"] *,
+    div[data-testid="stRadio"] p, div[data-testid="stRadio"] span,
+    .stRadio label, .stRadio label *, .stRadio p, .stRadio span,
+    div[data-testid="stCheckbox"] label, div[data-testid="stCheckbox"] label *,
     .stCheckbox label, .stCheckbox label span,
     .stSelectbox label, .stTextInput label {{
         color: {text_main} !important;
         opacity: 1 !important;
+        -webkit-text-fill-color: {text_main} !important;
     }}
 </style>
 """,
@@ -593,7 +595,6 @@ if st.session_state["user_role"] == "passager":
             use_container_width=True,
             key="mic_pax_inline"
         )
-        st.markdown(f'<div class="mic-hint">{t("🔴 = écoute en cours", "🔴 = listening")}</div>', unsafe_allow_html=True)
 
     with col_input_pax:
         prompt_saisi_pax = st.chat_input(t("Ex: Liste des vols, heure de départ KP010, combien de temps reste-t-il...", "E.g. List flights, departure time KP010, how much time is left..."), key="chat_input_pax")
@@ -937,7 +938,6 @@ elif st.session_state["user_role"] == "agent":
             use_container_width=True,
             key="mic_agent_inline"
         )
-        st.markdown(f'<div class="mic-hint">{t("🔴 = écoute en cours", "🔴 = listening")}</div>', unsafe_allow_html=True)
 
     with col_input_agent:
         prompt_saisi_agent = st.chat_input(t("Tapez votre question ici...", "Type your question here..."), key="chat_input_agent")
