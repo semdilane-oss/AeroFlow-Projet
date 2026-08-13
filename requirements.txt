@@ -3,3 +3,5 @@ pandas
 plotly
 gTTS
 reportlab
+streamlit-mic-recorder
+SpeechRecognition
