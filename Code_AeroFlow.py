@@ -177,6 +177,15 @@ st.markdown(
     .mic-hint {{
         font-size: 0.72rem; color: {placeholder_color}; text-align: center; margin-top: 2px;
     }}
+    /* FIX (contraste) : les labels de champs, radios et checkboxes héritent d'une couleur
+       très claire par défaut chez Streamlit, invisible sur fond clair. On force la couleur. */
+    label, [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
+    .stRadio label, .stRadio div[role="radiogroup"] label span,
+    .stCheckbox label, .stCheckbox label span,
+    .stSelectbox label, .stTextInput label {{
+        color: {text_main} !important;
+        opacity: 1 !important;
+    }}
 </style>
 """,
     unsafe_allow_html=True,
